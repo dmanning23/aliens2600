@@ -213,6 +213,8 @@ UpdatePlayer subroutine
     adc #1
     sta XPos1,y
 
+    jmp .doneUpdatePlayer
+
 .checkHoldingLeft
 
     ;check if the player is holding left
@@ -237,13 +239,15 @@ UpdatePlayer subroutine
     sbc #1
     sta XPos1,y
 
+    jmp .doneUpdatePlayer
+
 .standing
 
     ;set the player state
     lda StandingState
     sta PlayerState1,y
 
-
+.doneUpdatePlayer
 
     ; Switch to Bank 2 routine
     BANK_SWITCH 1,UpdatePlayerSprite
@@ -690,6 +694,7 @@ DrawPlayer subroutine
     ;Skip to the next line and draw the ring
     sta WSYNC
 
+    dex ;dec twice because we are doing a 2line kernel
     dex
     bne .LVScan	; repeat until 192 lines
 
