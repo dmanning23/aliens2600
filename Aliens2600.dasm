@@ -1,0 +1,708 @@
+
+    processor 6502
+    include "vcs.h"
+    include "macro.h"
+    include "xmacro.h"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Constants segment
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+SpriteHeight	equ 16*2
+
+StandingState   equ #00
+WalkingState    equ #01
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Variables segment
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    seg.u Variables
+    org $80
+
+;The player's X,Y position on the screen
+;Playfield range:
+;vert range: 0 - 164
+;horiz range: 0 - 156
+;TODO: clean up playfield range magic numbers
+XPos1       .byte
+XPos2       .byte
+YPos1       .byte
+YPos2       .byte
+
+;Which direction the player is facing
+;0 = Left
+;1 = Right
+FaceRight1   .byte
+FaceRight2   .byte
+
+;Player states:
+;0 = Standing
+;1 = Walking
+PlayerState1 .byte
+PlayerState2 .byte
+
+;This points at the current sprite being drawn
+spritePtr1 .word
+spritePtr2 .word
+
+;Pointer to the current color being drawn
+spriteColorPtr1 .word
+spriteColorPtr2 .word
+
+;The timing of the current animation
+animationTiming .byte
+
+;The number of frames in the current animation
+numAnimationFrames .byte
+
+;The animation timer
+currentAnimationTime .byte
+
+;The current animation frame
+currentAnimationFrame .byte
+
+;This variable is used to mask the controller input to map to p1 or p2
+controllerMask  .byte 
+
+counter .byte
+
+;scratch variable
+Temp .byte
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Code segment
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Macro that implements Bank Switching trampoline
+; X = bank number
+; A = hi byte of destination PC
+; Y = lo byte of destination PC
+    MAC BANK_SWITCH_TRAMPOLINE
+        pha             ; push hi byte
+        tya             ; Y -> A
+        pha             ; push lo byte
+        lda $1FF8,x     ; do the bank switch
+        rts             ; return to target
+    ENDM
+
+; Macro that performs bank switch
+    MAC BANK_SWITCH
+.Bank   SET {1}
+.Addr   SET {2}
+        lda #>(.Addr-1)
+        ldy #<(.Addr-1)
+        ldx #.Bank
+        jmp BankSwitch
+    ENDM
+
+; Bank prologue that handles reset
+; no matter which bank is selected at powerup
+; it switches to bank 0 and jumps to Reset_0
+    MAC BANK_PROLOGUE
+        lda #>(Reset_0-1)
+        ldy #<(Reset_0-1)
+        ldx #$ff
+        txs		; set up stack pointer
+        inx		; X = 0
+    ENDM
+
+; Bank epilogue -- 6502 vectors
+    MAC BANK_VECTORS
+        .word Start      ; NMI
+        .word Start      ; RESET
+        .word Start	 ; BRK
+    ENDM
+
+    seg Code
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; BANK 0
+
+    org  $1000
+    rorg $F000
+;----The following code is the same on both banks----
+Start
+    BANK_PROLOGUE
+BankSwitch
+    BANK_SWITCH_TRAMPOLINE
+;----End of bank-identical code----
+
+Reset_0
+    CLEAN_START
+    
+    jsr InitializeVariables
+
+NextFrame subroutine
+
+    ; 1 + 3 lines of VSYNC
+    VERTICAL_SYNC
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; 35 lines of underscan
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    TIMER_SETUP 35
+
+    lda #0
+    sta RESP0
+    sta RESP1
+    sta HMP0
+    sta HMP1
+
+    ;Increment the frame counter 
+    inc counter
+
+    ;Since we are only drawing one player per frame, which one needs to have x pos set?
+    jsr SetCharacter
+
+SetP1ControllerMask subroutine
+
+    ;Since we are only drawing one player per frame, which one needs to have x pos set?
+    jsr SetCharacter
+
+    ;set the controller mask properly depending on which player we are updating
+    beq .SetP1ControllerMask
+    lda #%00001111 ;check p2 joystick
+    sta controllerMask
+    jmp .DoneSettingControllerMask
+
+.SetP1ControllerMask
+    lda #%11110000 ;this mask is used by the MoveJoystick routine to check p1 joystick
+    sta controllerMask
+
+.DoneSettingControllerMask
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Update Player Movement
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+UpdatePlayer subroutine
+
+    ;check if the player is holding right
+    lda #%10001000	;right?
+    and controllerMask
+    and SWCHA
+    bne .checkHoldingLeft ;if not, go check if holding left
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+
+    ;set the player to facing right
+    lda #1
+    sta FaceRight1,y
+
+    ;update the players position
+    lda XPos1,y
+    clc
+    adc #1
+    sta XPos1,y
+
+.checkHoldingLeft
+
+    ;check if the player is holding left
+    lda #%01000100	;left?
+    and controllerMask
+    and SWCHA
+    bne .standing ;if not, the player is standing still
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+
+    ;set the player to facing left
+    lda #0
+    sta FaceRight1,y
+
+    ;update the players position
+    lda XPos1,y
+    sec
+    sbc #1
+    sta XPos1,y
+
+.standing
+
+    ;set the player state
+    lda StandingState
+    sta PlayerState1,y
+
+
+
+    ; Switch to Bank 2 routine
+    BANK_SWITCH 1,UpdatePlayerSprite
+
+FinishUnderscan
+    TIMER_WAIT
+
+    ; Switch to Bank 2 routine
+    BANK_SWITCH 1,LinesOfFrame
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; 29 lines of overscan
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+OverScan
+    TIMER_SETUP 29
+
+    lda $0 ;dont draw the sprite in the overscan
+    sta GRP0
+    sta COLUP0
+    sta GRP1
+    sta COLUP1
+    TIMER_WAIT
+    ; total = 262 lines, go to next frame
+    jmp NextFrame
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Initialize all the variables to their default values
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+InitializeVariables subroutine
+    ; set to quad
+    lda #5
+    sta NUSIZ0
+    sta NUSIZ1
+
+    ;set the background art
+    lda #%00000000
+    sta PF0
+    sta PF1
+    sta PF2
+
+    ;set the background color
+    lda #$01
+    sta COLUBK
+
+    lda #%00010101 ; make missiles 2x-wide and set player sprites to double
+    ;lda #%00011111 ; make missiles 2x-wide and set player sprites to quad
+     ;lda #$20 ; make missiles 4x-wide
+    sta NUSIZ0
+    sta NUSIZ1
+
+    ;lda #%00110000 ;set ball 8x-wide
+    lda #%00100000 ;set ball 4x-wide
+    sta CTRLPF
+
+    ;set both players to the center horizontally
+    lda #64
+    sta YPos1
+    sta YPos2
+
+    ;set the player 1 x position, right side of screen
+    lda #9
+    sta XPos1
+
+    ;set the player 2 x position, left side of screen
+    lda #147
+    sta XPos2
+
+    ;Set the states of the players
+    sta PlayerState1
+    sta PlayerState2
+
+    ;make both players face right and move in the correct directions
+    lda #1
+    sta FaceRight1
+    lda #0
+    sta FaceRight2
+
+    ;reset the counters
+    lda #0
+    sta counter
+
+    ;reset the pointers
+    sta spritePtr1
+    sta spritePtr1+1
+    sta spritePtr2
+    sta spritePtr2+1
+    sta spriteColorPtr1
+    sta spriteColorPtr1+1
+    sta spriteColorPtr2
+    sta spriteColorPtr2+1
+
+    ;set all the animation variables
+    sta currentAnimationTime
+    sta currentAnimationFrame
+    lda #30
+    sta animationTiming
+    lda #1
+    sta numAnimationFrames
+
+    lda #0 
+    sta Temp
+
+    rts
+
+
+
+SetCharacter subroutine
+    lda counter
+    and %00000001
+    tay
+    rts
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Bank 0 epilogue
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    org  $1FFA
+    rorg $FFFA
+    BANK_VECTORS
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; BANK 1
+
+    org  $2000
+    rorg $F000
+;----The following code is the same on both banks----
+Start
+    BANK_PROLOGUE
+BankSwitch
+    BANK_SWITCH_TRAMPOLINE
+;----End of bank-identical code----
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; set the player sprite
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+UpdatePlayerSprite subroutine
+
+    lda counter
+    and %00000001
+    tay
+
+    ;Check which state the player is in
+    lda PlayerState1,y
+    cmp WalkingState
+    beq UpdateWalkingSprite
+
+    jmp UpdateStandingSprite
+
+UpdateWalkingSprite subroutine
+
+    ldx #0
+    lda #<alienwalk11
+    sta spritePtr1,x
+    inx
+    lda #>alienwalk11
+    sta spritePtr1,x
+
+    lda alienwalkSpeed
+    sta animationTiming
+    lda alienwalkFrames
+    sta numAnimationFrames
+
+    jmp DoneUpdatingPlayerSprite
+
+UpdateStandingSprite subroutine
+
+    ldx #0
+    lda #<alienstanding11
+    sta spritePtr1,x
+    inx
+    lda #>alienstanding11
+    sta spritePtr1,x
+
+    lda alienstandingSpeed
+    sta animationTiming
+    lda alienstandingFrames
+    sta numAnimationFrames
+
+    jmp DoneUpdatingPlayerSprite
+
+DoneUpdatingPlayerSprite
+
+UpdateAnimation subroutine
+
+    ;don't update the animation if the number of frames is less than 1
+    lda numAnimationFrames     ; Load number of frames
+    cmp #2                     ; Compare with 2
+    bcs .continue               ; Branch if numAnimationFrames >= 2
+    jmp .doneUpdatingAnimation ; Skip if numAnimationFrames <= 1
+
+.continue:
+
+    ;Update the animation time 
+
+    ;Increment the current animation time
+    inc currentAnimationTime
+
+    ;Check if it is time to increment the frame
+    lda currentAnimationTime ; Load currentAnimationTime into accumulator
+    cmp animationTiming ; Compare with animationTiming
+    bcc .doneUpdatingAnimationTime ; Branch if currentAnimationTime < animationTiming
+
+    ; If we get here, currentAnimationTime >= animationTiming
+    lda #0                     ; Load 0 into accumulator
+    sta currentAnimationTime   ; Reset currentAnimationTime to 0
+    inc currentAnimationFrame  ; Increment the animation frame
+
+.doneUpdatingAnimationTime
+
+    ;Update the animation frame
+
+    lda currentAnimationFrame ; Load current frame into accumulator
+    cmp numAnimationFrames ; Compare with max frames
+    ;beq .doneUpdatingAnimationFrame ; If equal, we're good
+    bcc .doneUpdatingAnimationFrame ; Branch if currentAnimationFrame < numAnimationFrames
+
+    ; If we get here, currentAnimationFrame >= numAnimationFrames
+    lda #0 ; Load 0 into accumulator
+    sta currentAnimationFrame ; Reset frame back to 0
+
+.doneUpdatingAnimationFrame:
+
+    ;Move the sprite pointer to point to the correct animation frame
+
+    lda currentAnimationFrame  ; Check if frame is 0
+    beq .doneUpdatingSpritePointer                  ; If 0, no adding needed
+
+    ldx currentAnimationFrame ; Use X as our frameCounter
+    
+.addLoop:
+    clc                       ; Clear carry before addition
+    lda spritePtr1           ; Add 52 to pointer
+    adc #64
+    sta spritePtr1
+    lda spritePtr1+1         ; Add carry to high byte
+    adc #0
+    sta spritePtr1+1
+    
+    dex                      ; Decrement frameCounter
+    bne .addLoop             ; Keep going if we're not done
+
+.doneUpdatingSpritePointer
+
+.doneUpdatingAnimation
+
+    ;set up rest of the player sprites
+
+    ;Set the second player sprite
+    ldx #0
+    lda spritePtr1,x        ; Load the low byte value
+    clc                     ; Clear carry before addition
+    adc #16                 ; Add 13 to the value
+    sta spritePtr2,x
+    inx
+    lda spritePtr1,x        ; Load the high byte value
+    adc #0                  ; Add carry if it occurred from low byte addition
+    sta spritePtr2,x
+
+    ;Set the player color
+    ldx #0
+    lda spritePtr1,x        ; Load the low byte value
+    clc                     ; Clear carry before addition
+    adc #32                 ; Point at the color frame
+    sta spriteColorPtr1,x
+    inx
+    lda spritePtr1,x        ; Load the high byte value
+    adc #0                  ; Add carry if it occurred from low byte addition
+    sta spriteColorPtr1,x
+
+    ;Set the second player color
+    ldx #0
+    lda spritePtr1,x        ; Load the low byte value
+    clc                     ; Clear carry before addition
+    adc #48                 ; Point at the color frame
+    sta spriteColorPtr2,x
+    inx
+    lda spritePtr1,x        ; Load the high byte value
+    adc #0                  ; Add carry if it occurred from low byte addition
+    sta spriteColorPtr2,x
+
+
+
+
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Flip the player sprite if necessary
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+FlipPlayerSprite subroutine
+
+    ;flip the player if necessary
+    lda FaceRight1,y
+    bne .FlipPlayerSpriteRight
+
+    ;Face the player to the left
+    lda #%00001000
+    sta REFP0
+    sta REFP1
+    jmp .DoneFlippingPlayerSprite
+
+.FlipPlayerSpriteRight
+    lda #0
+    sta REFP0
+    sta REFP1
+
+.DoneFlippingPlayerSprite
+
+    jsr UpdatePosition
+
+    ;switch back to bank 0
+    BANK_SWITCH 0,FinishUnderscan
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Update Player Positions
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+UpdatePosition subroutine
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Set the horizontal screen position of the correct player
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    lda XPos1,y
+    ldx #0
+    jsr SetHorizPos
+    lda XPos1,y
+    ldx #1
+    jsr SetHorizPos
+
+    sta WSYNC	; sync w/ scanline
+    sta HMOVE	; apply fine offsets
+
+    rts
+
+
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; SetHorizPos routine
+    ; A = X coordinate of the object
+    ; X = index of the desired object:
+    ;  0: player 1
+    ;  1: player 2
+    ;  2: missile 1
+    ;  3: missile 2
+    ;  4: ball
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+SetHorizPos subroutine
+    sta WSYNC ; start a new line
+    sec ; set carry flag
+.DivideLoop
+    sbc #15 ; subtract 15
+    bcs .DivideLoop ; branch until negative
+    eor #7 ; calculate fine offset
+    asl
+    asl
+    asl
+    asl
+    sta RESP0,x ; fix coarse position
+    sta HMP0,x ; set fine offset
+    rts ; return to caller
+
+
+
+
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; 192 lines of frame
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+LinesOfFrame
+
+    ;Which player is being drawn this frame?
+    lda counter
+    and #$01
+    beq DrawP1
+
+    ;load the Tails coordinate
+    lda YPos2
+    sta Temp
+    jmp DrawPlayer
+
+DrawP1
+    ;load the sonic coordinate
+    lda YPos1
+    sta Temp
+
+DrawPlayer subroutine
+    ldx #192	; X = 192 scanlines
+.LVScan
+    txa		; X -> A
+    sec		; set carry for subtract
+    sbc Temp	; local coordinate
+    cmp #SpriteHeight ; in sprite?
+    bcc .InSprite	; yes, skip over next
+    lda #0		; not in sprite, load 0
+.InSprite
+    lsr        ; Shift right (divide by 2)
+    ;lsr        ; Shift right again (divide by 4)
+    tay		; local coord -> Y
+
+    lda (spritePtr1),y	; lookup color
+    sta WSYNC	; sync w/ scanline
+    sta GRP0	; store bitmap
+    lda (spriteColorPtr1),y ; lookup color
+    sta COLUP0	; store color
+
+    lda (spritePtr2),y	; lookup color
+    sta GRP1	; store bitmap
+    lda (spriteColorPtr2),y ; lookup color
+    sta COLUP1	; store color
+
+    ;Skip to the next line and draw the ring
+    sta WSYNC
+
+    dex
+    bne .LVScan	; repeat until 192 lines
+
+    ;Switch back to bank0
+    BANK_SWITCH 0,OverScan
+
+    include "alien_sprite.asm"
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Bank 1 epilogue
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    org  $2FFA
+    rorg $FFFA
+    BANK_VECTORS
