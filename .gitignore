@@ -2,3 +2,6 @@ BestFwends.bin
 bin/
 sfx.asm.lst
 sfx.asm.sym
+
+alien_sprite.asm.lst
+alien_sprite.asm.sym

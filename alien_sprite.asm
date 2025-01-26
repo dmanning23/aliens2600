@@ -290,7 +290,7 @@ alienstandingColor42
   .byte $00 ; Row 16
 
 alienstandingSpeed:
-  .byte 11 ; Animation speed
+  .byte 7 ; Animation speed
 
 alienstandingFrames:
   .byte 4 ; Number of frames
@@ -801,7 +801,7 @@ alienwalkColor72
   .byte $A4 ; Row 16
 
 alienwalkSpeed:
-  .byte 7 ; Animation speed
+  .byte 3 ; Animation speed
 
 alienwalkFrames:
   .byte 7 ; Number of frames
