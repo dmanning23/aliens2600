@@ -214,7 +214,7 @@ UpdatePlayer subroutine
     ;update the players position
     lda XPos1,y
     clc
-    adc #1
+    adc #2
     sta XPos1,y
 
     jmp .doneUpdatePlayer
@@ -240,7 +240,7 @@ UpdatePlayer subroutine
     ;update the players position
     lda XPos1,y
     sec
-    sbc #1
+    sbc #2
     sta XPos1,y
 
     jmp .doneUpdatePlayer
@@ -254,7 +254,7 @@ UpdatePlayer subroutine
 .doneUpdatePlayer
 
     ; Switch to Bank 2 routine
-    BANK_SWITCH 1,UpdatePlayerSprite
+    BANK_SWITCH 1,UpdateCurrentSprite
 
 FinishUnderscan
     TIMER_WAIT
@@ -389,7 +389,7 @@ SetCharacter subroutine
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; BANK 1
+;;; BANK 1: Draw the frame
 
     org  $2000
     rorg $F000
@@ -400,13 +400,214 @@ BankSwitch
     BANK_SWITCH_TRAMPOLINE
 ;----End of bank-identical code----
 
+UpdateCurrentSprite
+
+    lda counter
+    and %00000001
+    tay
+
+    ;TODO: should we draw the marine or the alien?
+    jsr UpdateAlien
+
+ReturnUpdateCurrentSprite
+
+    jsr FlipPlayerSprite
+    jsr UpdatePosition
+
+    ;switch back to bank 0
+    BANK_SWITCH 0,FinishUnderscan
+
+
+
+UpdateMarine subroutine
+
+    ;TODO: update the marine
+
+UpdateAlien subroutine
+
+    ;TODO: jump to the correct bank
+    jsr UpdateAlienSprite
+    jsr UpdateAlienAnimation
+    rts
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Flip the player sprite if necessary
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+FlipPlayerSprite subroutine
+
+    ;flip the player if necessary
+    lda FaceRight1,y
+    bne .FlipPlayerSpriteRight
+
+    ;Face the player to the left
+    lda #%00001000
+    sta REFP0
+    sta REFP1
+    jmp .DoneFlippingPlayerSprite
+
+.FlipPlayerSpriteRight
+    lda #0
+    sta REFP0
+    sta REFP1
+
+.DoneFlippingPlayerSprite
+
+    rts
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Update Player Positions
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+UpdatePosition subroutine
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Set the horizontal screen position of the correct player
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    lda XPos1,y
+    ldx #0
+    jsr SetHorizPos
+    lda XPos1,y
+    ldx #1
+    jsr SetHorizPos
+
+    sta WSYNC	; sync w/ scanline
+    sta HMOVE	; apply fine offsets
+
+    rts
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; SetHorizPos routine
+    ; A = X coordinate of the object
+    ; X = index of the desired object:
+    ;  0: player 1
+    ;  1: player 2
+    ;  2: missile 1
+    ;  3: missile 2
+    ;  4: ball
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+SetHorizPos subroutine
+    sta WSYNC ; start a new line
+    sec ; set carry flag
+.DivideLoop
+    sbc #15 ; subtract 15
+    bcs .DivideLoop ; branch until negative
+    eor #7 ; calculate fine offset
+    asl
+    asl
+    asl
+    asl
+    sta RESP0,x ; fix coarse position
+    sta HMP0,x ; set fine offset
+    rts ; return to caller
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; 192 lines of frame
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+LinesOfFrame
+
+    ;Which player is being drawn this frame?
+    lda counter
+    and #$01
+    beq DrawP1
+
+    ;load the Tails coordinate
+    lda YPos2
+    sta Temp
+    jmp DrawPlayer
+
+DrawP1
+    ;load the sonic coordinate
+    lda YPos1
+    sta Temp
+
+DrawPlayer subroutine
+    ldx #192	; X = 192 scanlines
+.LVScan
+    txa		; X -> A
+    sec		; set carry for subtract
+    sbc Temp	; local coordinate
+    cmp #SpriteHeight ; in sprite?
+    bcc .InSprite	; yes, skip over next
+    lda #0		; not in sprite, load 0
+.InSprite
+    lsr        ; Shift right (divide by 2)
+    ;lsr        ; Shift right again (divide by 4)
+    tay		; local coord -> Y
+
+    lda (spritePtr1),y	; lookup color
+    sta WSYNC	; sync w/ scanline
+    sta GRP0	; store bitmap
+    lda (spriteColorPtr1),y ; lookup color
+    sta COLUP0	; store color
+
+    lda (spritePtr2),y	; lookup color
+    sta GRP1	; store bitmap
+    lda (spriteColorPtr2),y ; lookup color
+    sta COLUP1	; store color
+
+    ;Skip to the next line and draw the ring
+    sta WSYNC
+
+    dex ;dec twice because we are doing a 2line kernel
+    dex
+    bne .LVScan	; repeat until 192 lines
+
+    ;Switch back to bank0
+    BANK_SWITCH 0,OverScan
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Bank 1 epilogue
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;    org  $2FFA
+    ;rorg $FFFA
+    ;BANK_VECTORS
+
+    ;TODO: move alien drawing to it's own bank
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; BANK 2: Draw the Alien
+
+ ;   org  $3000
+ ;   rorg $F000
+;----The following code is the same on both banks----
+;Start
+;    BANK_PROLOGUE
+;BankSwitch
+;    BANK_SWITCH_TRAMPOLINE
+;----End of bank-identical code----
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ; set the player sprite
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-UpdatePlayerSprite subroutine
+UpdateAlienSprite subroutine
 
     lda counter
     and %00000001
@@ -415,11 +616,11 @@ UpdatePlayerSprite subroutine
     ;Check which state the player is in
     lda PlayerState1,y
     cmp WalkingState
-    beq UpdateWalkingSprite
+    beq .updateWalkingSprite
 
-    jmp UpdateStandingSprite
+    jmp .updateStandingSprite
 
-UpdateWalkingSprite subroutine
+.updateWalkingSprite 
 
     ldx #0
     lda #<alienwalk11
@@ -433,9 +634,9 @@ UpdateWalkingSprite subroutine
     lda alienwalkFrames
     sta numAnimationFrames1,y
 
-    jmp DoneUpdatingPlayerSprite
+    jmp .doneUpdatingPlayerSprite
 
-UpdateStandingSprite subroutine
+.updateStandingSprite
 
     ldx #0
     lda #<alienstanding11
@@ -449,11 +650,12 @@ UpdateStandingSprite subroutine
     lda alienstandingFrames
     sta numAnimationFrames1,y
 
-    jmp DoneUpdatingPlayerSprite
+    jmp .doneUpdatingPlayerSprite
 
-DoneUpdatingPlayerSprite
+.doneUpdatingPlayerSprite
+    rts
 
-UpdateAnimation subroutine
+UpdateAlienAnimation subroutine
 
     ;don't update the animation if the number of frames is less than 1
     lda numAnimationFrames1,y     ; Load number of frames
@@ -558,165 +760,20 @@ UpdateAnimation subroutine
     adc #0                  ; Add carry if it occurred from low byte addition
     sta spriteColorPtr2,x
 
-
-
-
-
-
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; Flip the player sprite if necessary
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-FlipPlayerSprite subroutine
-
-    ;flip the player if necessary
-    lda FaceRight1,y
-    bne .FlipPlayerSpriteRight
-
-    ;Face the player to the left
-    lda #%00001000
-    sta REFP0
-    sta REFP1
-    jmp .DoneFlippingPlayerSprite
-
-.FlipPlayerSpriteRight
-    lda #0
-    sta REFP0
-    sta REFP1
-
-.DoneFlippingPlayerSprite
-
-    jsr UpdatePosition
-
-    ;switch back to bank 0
-    BANK_SWITCH 0,FinishUnderscan
-
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; Update Player Positions
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-UpdatePosition subroutine
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; Set the horizontal screen position of the correct player
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    lda XPos1,y
-    ldx #0
-    jsr SetHorizPos
-    lda XPos1,y
-    ldx #1
-    jsr SetHorizPos
-
-    sta WSYNC	; sync w/ scanline
-    sta HMOVE	; apply fine offsets
-
+    ;TODO: clean this all up
+    ;BANK_SWITCH 1,ReturnUpdateCurrentSprite
     rts
 
-
-
-
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; SetHorizPos routine
-    ; A = X coordinate of the object
-    ; X = index of the desired object:
-    ;  0: player 1
-    ;  1: player 2
-    ;  2: missile 1
-    ;  3: missile 2
-    ;  4: ball
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-SetHorizPos subroutine
-    sta WSYNC ; start a new line
-    sec ; set carry flag
-.DivideLoop
-    sbc #15 ; subtract 15
-    bcs .DivideLoop ; branch until negative
-    eor #7 ; calculate fine offset
-    asl
-    asl
-    asl
-    asl
-    sta RESP0,x ; fix coarse position
-    sta HMP0,x ; set fine offset
-    rts ; return to caller
-
-
-
-
-
-
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; 192 lines of frame
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-LinesOfFrame
-
-    ;Which player is being drawn this frame?
-    lda counter
-    and #$01
-    beq DrawP1
-
-    ;load the Tails coordinate
-    lda YPos2
-    sta Temp
-    jmp DrawPlayer
-
-DrawP1
-    ;load the sonic coordinate
-    lda YPos1
-    sta Temp
-
-DrawPlayer subroutine
-    ldx #192	; X = 192 scanlines
-.LVScan
-    txa		; X -> A
-    sec		; set carry for subtract
-    sbc Temp	; local coordinate
-    cmp #SpriteHeight ; in sprite?
-    bcc .InSprite	; yes, skip over next
-    lda #0		; not in sprite, load 0
-.InSprite
-    lsr        ; Shift right (divide by 2)
-    ;lsr        ; Shift right again (divide by 4)
-    tay		; local coord -> Y
-
-    lda (spritePtr1),y	; lookup color
-    sta WSYNC	; sync w/ scanline
-    sta GRP0	; store bitmap
-    lda (spriteColorPtr1),y ; lookup color
-    sta COLUP0	; store color
-
-    lda (spritePtr2),y	; lookup color
-    sta GRP1	; store bitmap
-    lda (spriteColorPtr2),y ; lookup color
-    sta COLUP1	; store color
-
-    ;Skip to the next line and draw the ring
-    sta WSYNC
-
-    dex ;dec twice because we are doing a 2line kernel
-    dex
-    bne .LVScan	; repeat until 192 lines
-
-    ;Switch back to bank0
-    BANK_SWITCH 0,OverScan
-
     include "alien_sprite.asm"
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Bank 2 epilogue
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;org  $3FFA
+    ;rorg $FFFA
+    ;BANK_VECTORS
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
