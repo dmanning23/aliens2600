@@ -16,6 +16,7 @@ MarineHeight equ 16*2
 StandingState   equ #00
 WalkingState    equ #01
 ShootingState    equ #02
+StunnedState equ #3
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -42,11 +43,12 @@ YPos2       .byte
 FaceRight1   .byte
 FaceRight2   .byte
 
-;Player states:
-;0 = Standing
-;1 = Walking
+;Player states
 PlayerState1 .byte
 PlayerState2 .byte
+
+PlayerStateTimer1 .byte
+PlayerStateTimer2 .byte
 
 ;This points at the current sprite being drawn
 spritePtr1 .word
@@ -74,6 +76,8 @@ currentAnimationFrame2 .byte
 
 ;This variable is used to mask the controller input to map to p1 or p2
 controllerMask  .byte 
+
+AlienHealth .byte
 
 counter .byte
 
@@ -284,6 +288,13 @@ InitializeVariables subroutine
     lda #0 
     sta Temp
 
+    lda #4
+    sta AlienHealth
+
+    lda #0
+    sta PlayerStateTimer1
+    sta PlayerStateTimer2
+
     rts
 
 
@@ -306,10 +317,26 @@ SetCharacter subroutine
 
 UpdateAlienInput subroutine
 
+    ;dec the state timer
+    dec PlayerStateTimer2
+
     lda #%00001111 ;check p2 joystick
     sta controllerMask
 
     ldy #1
+
+    ;is the alien getting shot?
+    lda PlayerState1,y
+    cmp StunnedState
+    bne .checkHoldingRight
+
+    ;check if the player is done being stunned
+    lda PlayerStateTimer2
+    bne .doneUpdatePlayer
+
+    ;hey if it gets here the player is done being stunned
+
+.checkHoldingRight
 
     ;check if the player is holding right
     lda #%10001000	;right?
@@ -389,6 +416,31 @@ UpdateMarineInput subroutine
     ;set the player to shooting
     lda ShootingState
     sta PlayerState1,y
+
+    ;update the alien health?
+    lda PlayerState2
+    cmp StunnedState
+    beq .doneUpdateAlienHealth
+
+    ;the alien takes a hit
+    lda AlienHealth
+    sec
+    sbc #1
+    sta AlienHealth
+
+    lda StunnedState
+    sta PlayerState2
+
+    lda #30
+    sta PlayerStateTimer2
+
+    ;make sure the animation time is restarted
+    lda #0
+    sta currentAnimationTime2
+    sta currentAnimationFrame2
+
+.doneUpdateAlienHealth
+
     jmp .doneUpdatePlayer
 
 .checkHoldRight
@@ -729,7 +781,10 @@ UpdateAlienSprite subroutine
     cmp WalkingState
     beq .updateWalkingSprite
 
-    jmp .updateStandingSprite
+    cmp StandingState
+    beq .updateStandingSprite
+
+    jmp .updateStunnedSprite
 
 .updateWalkingSprite 
 
@@ -747,8 +802,23 @@ UpdateAlienSprite subroutine
 
     jmp .doneUpdatingPlayerSprite
 
+
+
 .updateStandingSprite
 
+    lda AlienHealth
+    cmp #4
+    beq .standing100
+
+    cmp #3
+    beq .standing25
+
+    cmp #2
+    beq .standing50
+
+    jmp .standing75
+
+.standing100
     ldx #0
     lda #<alienstanding11
     sta spritePtr1,x
@@ -759,6 +829,109 @@ UpdateAlienSprite subroutine
     lda alienstandingSpeed
     sta animationTiming1,y
     lda alienstandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.standing25
+    ldx #0
+    lda #<aliens2511
+    sta spritePtr1,x
+    inx
+    lda #>aliens2511
+    sta spritePtr1,x
+
+    lda aliens25Speed
+    sta animationTiming1,y
+    lda aliens25Frames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.standing50
+    ldx #0
+    lda #<aliens5011
+    sta spritePtr1,x
+    inx
+    lda #>aliens5011
+    sta spritePtr1,x
+
+    lda aliens50Speed
+    sta animationTiming1,y
+    lda aliens50Frames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.standing75
+    ldx #0
+    lda #<aliens7511
+    sta spritePtr1,x
+    inx
+    lda #>aliens7511
+    sta spritePtr1,x
+
+    lda aliens75Speed
+    sta animationTiming1,y
+    lda aliens75Frames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+
+
+.updateStunnedSprite
+
+    lda AlienHealth
+    cmp #3
+    beq .stunned25
+
+    cmp #2
+    beq .stunned50
+
+    jmp .stunned75
+
+.stunned25
+    ldx #0
+    lda #<alienhit2511
+    sta spritePtr1,x
+    inx
+    lda #>alienhit2511
+    sta spritePtr1,x
+
+    lda alienhit25Speed
+    sta animationTiming1,y
+    lda alienhit25Frames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.stunned50
+    ldx #0
+    lda #<alienhit5011
+    sta spritePtr1,x
+    inx
+    lda #>alienhit5011
+    sta spritePtr1,x
+
+    lda alienhit50Speed
+    sta animationTiming1,y
+    lda alienhit50Frames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.stunned75
+    ldx #0
+    lda #<alienhit7511
+    sta spritePtr1,x
+    inx
+    lda #>alienhit7511
+    sta spritePtr1,x
+
+    lda alienhit75Speed
+    sta animationTiming1,y
+    lda alienhit75Frames
     sta numAnimationFrames1,y
 
     jmp .doneUpdatingPlayerSprite
