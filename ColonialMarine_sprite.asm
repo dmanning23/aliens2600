@@ -1,228 +1,5 @@
 ;ColonialMarine Sprite Data (Height: 16)
 
-;Default Animation Data:
-ColonialMarineDefault11
-  .byte %00000000 ; Row 1
-  .byte %00000000 ; Row 2
-  .byte %00000000 ; Row 3
-  .byte %00000000 ; Row 4
-  .byte %00000000 ; Row 5
-  .byte %00000000 ; Row 6
-  .byte %00000000 ; Row 7
-  .byte %01110000 ; Row 8
-  .byte %01110000 ; Row 9
-  .byte %10001000 ; Row 10
-  .byte %11100100 ; Row 11
-  .byte %00000000 ; Row 12
-  .byte %01100000 ; Row 13
-  .byte %01000000 ; Row 14
-  .byte %01110000 ; Row 15
-  .byte %00000000 ; Row 16
-
-ColonialMarineDefault12
-  .byte %00000000 ; Row 1
-  .byte %00000000 ; Row 2
-  .byte %00000000 ; Row 3
-  .byte %00000000 ; Row 4
-  .byte %00000000 ; Row 5
-  .byte %00000000 ; Row 6
-  .byte %00000000 ; Row 7
-  .byte %00000000 ; Row 8
-  .byte %00000000 ; Row 9
-  .byte %01110000 ; Row 10
-  .byte %00011000 ; Row 11
-  .byte %01111100 ; Row 12
-  .byte %00011000 ; Row 13
-  .byte %00110000 ; Row 14
-  .byte %00000000 ; Row 15
-  .byte %00000000 ; Row 16
-
-ColonialMarineDefaultColor11
-  .byte $00 ; Row 1
-  .byte $00 ; Row 2
-  .byte $D8 ; Row 3
-  .byte $D8 ; Row 4
-  .byte $D8 ; Row 5
-  .byte $D8 ; Row 6
-  .byte $D8 ; Row 7
-  .byte $D8 ; Row 8
-  .byte $D8 ; Row 9
-  .byte $D8 ; Row 10
-  .byte $D8 ; Row 11
-  .byte $D8 ; Row 12
-  .byte $1C ; Row 13
-  .byte $18 ; Row 14
-  .byte $18 ; Row 15
-  .byte $00 ; Row 16
-
-ColonialMarineDefaultColor12
-  .byte $00 ; Row 1
-  .byte $00 ; Row 2
-  .byte $00 ; Row 3
-  .byte $00 ; Row 4
-  .byte $00 ; Row 5
-  .byte $00 ; Row 6
-  .byte $08 ; Row 7
-  .byte $D6 ; Row 8
-  .byte $D6 ; Row 9
-  .byte $D6 ; Row 10
-  .byte $08 ; Row 11
-  .byte $08 ; Row 12
-  .byte $08 ; Row 13
-  .byte $1C ; Row 14
-  .byte $1C ; Row 15
-  .byte $00 ; Row 16
-
-ColonialMarineDefault21
-  .byte %00000000 ; Row 1
-  .byte %00000000 ; Row 2
-  .byte %10000000 ; Row 3
-  .byte %11001000 ; Row 4
-  .byte %01011000 ; Row 5
-  .byte %01011000 ; Row 6
-  .byte %01110000 ; Row 7
-  .byte %01110000 ; Row 8
-  .byte %10000100 ; Row 9
-  .byte %11100000 ; Row 10
-  .byte %00000000 ; Row 11
-  .byte %01100000 ; Row 12
-  .byte %00110000 ; Row 13
-  .byte %01110000 ; Row 14
-  .byte %01110000 ; Row 15
-  .byte %00000000 ; Row 16
-
-ColonialMarineDefault22
-  .byte %00000000 ; Row 1
-  .byte %00000000 ; Row 2
-  .byte %00000000 ; Row 3
-  .byte %00000000 ; Row 4
-  .byte %00000000 ; Row 5
-  .byte %00000000 ; Row 6
-  .byte %00000000 ; Row 7
-  .byte %00000000 ; Row 8
-  .byte %01110000 ; Row 9
-  .byte %00011100 ; Row 10
-  .byte %01111100 ; Row 11
-  .byte %00011000 ; Row 12
-  .byte %01000000 ; Row 13
-  .byte %10000000 ; Row 14
-  .byte %00000000 ; Row 15
-  .byte %00000000 ; Row 16
-
-ColonialMarineDefaultColor21
-  .byte $00 ; Row 1
-  .byte $00 ; Row 2
-  .byte $D8 ; Row 3
-  .byte $D8 ; Row 4
-  .byte $D8 ; Row 5
-  .byte $D8 ; Row 6
-  .byte $D8 ; Row 7
-  .byte $D8 ; Row 8
-  .byte $D8 ; Row 9
-  .byte $D8 ; Row 10
-  .byte $D8 ; Row 11
-  .byte $1C ; Row 12
-  .byte $1C ; Row 13
-  .byte $36 ; Row 14
-  .byte $18 ; Row 15
-  .byte $00 ; Row 16
-
-ColonialMarineDefaultColor22
-  .byte $00 ; Row 1
-  .byte $00 ; Row 2
-  .byte $00 ; Row 3
-  .byte $00 ; Row 4
-  .byte $00 ; Row 5
-  .byte $00 ; Row 6
-  .byte $08 ; Row 7
-  .byte $D6 ; Row 8
-  .byte $D6 ; Row 9
-  .byte $08 ; Row 10
-  .byte $08 ; Row 11
-  .byte $08 ; Row 12
-  .byte $18 ; Row 13
-  .byte $34 ; Row 14
-  .byte $1C ; Row 15
-  .byte $00 ; Row 16
-
-ColonialMarineDefault31
-  .byte %00000000 ; Row 1
-  .byte %00000000 ; Row 2
-  .byte %00000000 ; Row 3
-  .byte %00000000 ; Row 4
-  .byte %10000000 ; Row 5
-  .byte %10000000 ; Row 6
-  .byte %10000000 ; Row 7
-  .byte %01000000 ; Row 8
-  .byte %01000000 ; Row 9
-  .byte %01100000 ; Row 10
-  .byte %01100000 ; Row 11
-  .byte %10010000 ; Row 12
-  .byte %11101000 ; Row 13
-  .byte %00000000 ; Row 14
-  .byte %01100000 ; Row 15
-  .byte %01100000 ; Row 16
-
-ColonialMarineDefault32
-  .byte %00000000 ; Row 1
-  .byte %00000000 ; Row 2
-  .byte %00000000 ; Row 3
-  .byte %00000000 ; Row 4
-  .byte %00001100 ; Row 5
-  .byte %00001000 ; Row 6
-  .byte %00001000 ; Row 7
-  .byte %00010000 ; Row 8
-  .byte %00010000 ; Row 9
-  .byte %00000000 ; Row 10
-  .byte %00000000 ; Row 11
-  .byte %01100000 ; Row 12
-  .byte %00010000 ; Row 13
-  .byte %01111100 ; Row 14
-  .byte %00011000 ; Row 15
-  .byte %00000000 ; Row 16
-
-ColonialMarineDefaultColor31
-  .byte $00 ; Row 1
-  .byte $00 ; Row 2
-  .byte $D8 ; Row 3
-  .byte $F4 ; Row 4
-  .byte $D8 ; Row 5
-  .byte $D8 ; Row 6
-  .byte $D8 ; Row 7
-  .byte $D8 ; Row 8
-  .byte $D8 ; Row 9
-  .byte $D8 ; Row 10
-  .byte $D8 ; Row 11
-  .byte $D8 ; Row 12
-  .byte $D8 ; Row 13
-  .byte $1C ; Row 14
-  .byte $1C ; Row 15
-  .byte $18 ; Row 16
-
-ColonialMarineDefaultColor32
-  .byte $00 ; Row 1
-  .byte $00 ; Row 2
-  .byte $F4 ; Row 3
-  .byte $F4 ; Row 4
-  .byte $D4 ; Row 5
-  .byte $D4 ; Row 6
-  .byte $D4 ; Row 7
-  .byte $D4 ; Row 8
-  .byte $D4 ; Row 9
-  .byte $D4 ; Row 10
-  .byte $D4 ; Row 11
-  .byte $D4 ; Row 12
-  .byte $D4 ; Row 13
-  .byte $08 ; Row 14
-  .byte $08 ; Row 15
-  .byte $1C ; Row 16
-
-ColonialMarineDefaultSpeed:
-  .byte 30 ; Animation speed
-
-ColonialMarineDefaultFrames:
-  .byte 3 ; Number of frames
-
 ;Standing Animation Data:
 ColonialMarineStanding11
   .byte %00000000 ; Row 1
@@ -1089,7 +866,7 @@ ColonialMarineStandingColor122
   .byte $1C ; Row 16
 
 ColonialMarineStandingSpeed:
-  .byte 13 ; Animation speed
+  .byte 9 ; Animation speed
 
 ColonialMarineStandingFrames:
   .byte 12 ; Number of frames
@@ -1528,7 +1305,7 @@ ColonialMarineWalkingColor62
   .byte $1C ; Row 16
 
 ColonialMarineWalkingSpeed:
-  .byte 7 ; Animation speed
+  .byte 6 ; Animation speed
 
 ColonialMarineWalkingFrames:
   .byte 6 ; Number of frames
@@ -1823,7 +1600,7 @@ ColonialMarineShootingColor42
   .byte $1C ; Row 16
 
 ColonialMarineShootingSpeed:
-  .byte 3 ; Animation speed
+  .byte 2 ; Animation speed
 
 ColonialMarineShootingFrames:
   .byte 4 ; Number of frames

@@ -10,10 +10,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-SpriteHeight	equ 16*2
+AlienHeight	equ 16*2
+MarineHeight equ 16*2
 
 StandingState   equ #00
 WalkingState    equ #01
+ShootingState    equ #02
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -92,7 +94,7 @@ Temp .byte
         pha             ; push hi byte
         tya             ; Y -> A
         pha             ; push lo byte
-        lda $1FF8,x     ; do the bank switch
+        lda $1FF6,x     ; do the bank switch
         rts             ; return to target
     ENDM
 
@@ -165,93 +167,8 @@ NextFrame subroutine
     ;Increment the frame counter 
     inc counter
 
-    ;Since we are only drawing one player per frame, which one needs to have x pos set?
-    jsr SetCharacter
-
-SetP1ControllerMask subroutine
-
-    ;Since we are only drawing one player per frame, which one needs to have x pos set?
-    jsr SetCharacter
-
-    ;set the controller mask properly depending on which player we are updating
-    beq .SetP1ControllerMask
-    lda #%00001111 ;check p2 joystick
-    sta controllerMask
-    jmp .DoneSettingControllerMask
-
-.SetP1ControllerMask
-    lda #%11110000 ;this mask is used by the MoveJoystick routine to check p1 joystick
-    sta controllerMask
-
-.DoneSettingControllerMask
-
-
-
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; Update Player Movement
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-UpdatePlayer subroutine
-
-    ;check if the player is holding right
-    lda #%10001000	;right?
-    and controllerMask
-    and SWCHA
-    bne .checkHoldingLeft ;if not, go check if holding left
-
-    ;if they are:
-
-    ;set the player state
-    lda WalkingState
-    sta PlayerState1,y
-
-    ;set the player to facing right
-    lda #1
-    sta FaceRight1,y
-
-    ;update the players position
-    lda XPos1,y
-    clc
-    adc #2
-    sta XPos1,y
-
-    jmp .doneUpdatePlayer
-
-.checkHoldingLeft
-
-    ;check if the player is holding left
-    lda #%01000100	;left?
-    and controllerMask
-    and SWCHA
-    bne .standing ;if not, the player is standing still
-
-    ;if they are:
-
-    ;set the player state
-    lda WalkingState
-    sta PlayerState1,y
-
-    ;set the player to facing left
-    lda #0
-    sta FaceRight1,y
-
-    ;update the players position
-    lda XPos1,y
-    sec
-    sbc #2
-    sta XPos1,y
-
-    jmp .doneUpdatePlayer
-
-.standing
-
-    ;set the player state
-    lda StandingState
-    sta PlayerState1,y
-
-.doneUpdatePlayer
+    jsr UpdateMarineInput
+    jsr UpdateAlienInput
 
     ; Switch to Bank 2 routine
     BANK_SWITCH 1,UpdateCurrentSprite
@@ -314,8 +231,10 @@ InitializeVariables subroutine
     sta CTRLPF
 
     ;set both players to the center horizontally
-    lda #64
+    lda #58
     sta YPos1
+
+    lda #64
     sta YPos2
 
     ;set the player 1 x position, right side of screen
@@ -377,6 +296,168 @@ SetCharacter subroutine
 
 
 
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Update Player Movement
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+UpdateAlienInput subroutine
+
+    lda #%00001111 ;check p2 joystick
+    sta controllerMask
+
+    ldy #1
+
+    ;check if the player is holding right
+    lda #%10001000	;right?
+    and controllerMask
+    and SWCHA
+    bne .checkHoldingLeft ;if not, go check if holding left
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+
+    ;set the player to facing right
+    lda #1
+    sta FaceRight1,y
+
+    ;update the players position
+    lda XPos1,y
+    clc
+    adc #1
+    sta XPos1,y
+
+    jmp .doneUpdatePlayer
+
+.checkHoldingLeft
+
+    ;check if the player is holding left
+    lda #%01000100	;left?
+    and controllerMask
+    and SWCHA
+    bne .standing ;if not, the player is standing still
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+
+    ;set the player to facing left
+    lda #0
+    sta FaceRight1,y
+
+    ;update the players position
+    lda XPos1,y
+    sec
+    sbc #1
+    sta XPos1,y
+
+    jmp .doneUpdatePlayer
+
+.standing
+
+    ;set the player state
+    lda StandingState
+    sta PlayerState1,y
+
+.doneUpdatePlayer
+
+    rts
+
+
+
+
+
+UpdateMarineInput subroutine
+
+    lda #%11110000
+    sta controllerMask
+
+    ldy #0
+
+    ;check if the button is being held
+    bit INPT4
+    bmi .checkHoldRight
+
+    ;set the player to shooting
+    lda ShootingState
+    sta PlayerState1,y
+    jmp .doneUpdatePlayer
+
+.checkHoldRight
+
+    ;check if the player is holding right
+    lda #%10001000	;right?
+    and controllerMask
+    and SWCHA
+    bne .checkHoldingLeft ;if not, go check if holding left
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+
+    ;set the player to facing right
+    lda #1
+    sta FaceRight1,y
+
+    ;update the players position
+    lda XPos1,y
+    clc
+    adc #1
+    sta XPos1,y
+
+    jmp .doneUpdatePlayer
+
+.checkHoldingLeft
+
+    ;check if the player is holding left
+    lda #%01000100	;left?
+    and controllerMask
+    and SWCHA
+    bne .standing ;if not, the player is standing still
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+
+    ;set the player to facing left
+    lda #0
+    sta FaceRight1,y
+
+    ;update the players position
+    lda XPos1,y
+    sec
+    sbc #1
+    sta XPos1,y
+
+    jmp .doneUpdatePlayer
+
+.standing
+
+    ;set the player state
+    lda StandingState
+    sta PlayerState1,y
+
+.doneUpdatePlayer
+
+    rts
+
+
+
+
+
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ; Bank 0 epilogue
@@ -400,16 +481,26 @@ BankSwitch
     BANK_SWITCH_TRAMPOLINE
 ;----End of bank-identical code----
 
-UpdateCurrentSprite
+UpdateCurrentSprite subroutine
 
     lda counter
     and %00000001
     tay
 
-    ;TODO: should we draw the marine or the alien?
-    jsr UpdateAlien
+    ;should we draw the marine or the alien?
+    beq .updateMarine
+
+    BANK_SWITCH 2, UpdateAlien
+
+.updateMarine
+
+    BANK_SWITCH 3, UpdateMarine
 
 ReturnUpdateCurrentSprite
+
+    lda counter
+    and %00000001
+    tay
 
     jsr FlipPlayerSprite
     jsr UpdatePosition
@@ -419,16 +510,9 @@ ReturnUpdateCurrentSprite
 
 
 
-UpdateMarine subroutine
 
-    ;TODO: update the marine
 
-UpdateAlien subroutine
 
-    ;TODO: jump to the correct bank
-    jsr UpdateAlienSprite
-    jsr UpdateAlienAnimation
-    rts
 
 
 
@@ -524,30 +608,79 @@ SetHorizPos subroutine
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-LinesOfFrame
+LinesOfFrame subRoutine
 
     ;Which player is being drawn this frame?
     lda counter
     and #$01
-    beq DrawP1
+    beq .drawP1
+
+    ;draw the alien
+    BANK_SWITCH 2, DrawAlien
+
+.drawP1
+
+    ;draw the marine
+    BANK_SWITCH 3, DrawMarine
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Bank 1 epilogue
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    org  $2FFA
+    rorg $FFFA
+    BANK_VECTORS
+
+
+
+
+
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;; BANK 2: Draw the Alien
+
+    org  $3000
+    rorg $F000
+;----The following code is the same on both banks----
+Start
+    BANK_PROLOGUE
+BankSwitch
+    BANK_SWITCH_TRAMPOLINE
+;----End of bank-identical code----
+
+
+UpdateAlien subroutine
+
+    lda counter
+    and %00000001
+    tay
+
+    jsr UpdateAlienSprite
+    jsr UpdateAlienAnimation
+    BANK_SWITCH 1, ReturnUpdateCurrentSprite
+
+
+
+DrawAlien subroutine
+    lda counter
+    and %00000001
+    tay
 
     ;load the Tails coordinate
     lda YPos2
     sta Temp
-    jmp DrawPlayer
 
-DrawP1
-    ;load the sonic coordinate
-    lda YPos1
-    sta Temp
-
-DrawPlayer subroutine
     ldx #192	; X = 192 scanlines
 .LVScan
     txa		; X -> A
     sec		; set carry for subtract
     sbc Temp	; local coordinate
-    cmp #SpriteHeight ; in sprite?
+    cmp #AlienHeight ; in sprite?
     bcc .InSprite	; yes, skip over next
     lda #0		; not in sprite, load 0
 .InSprite
@@ -578,28 +711,6 @@ DrawPlayer subroutine
 
 
 
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; Bank 1 epilogue
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;    org  $2FFA
-    ;rorg $FFFA
-    ;BANK_VECTORS
-
-    ;TODO: move alien drawing to it's own bank
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; BANK 2: Draw the Alien
-
- ;   org  $3000
- ;   rorg $F000
-;----The following code is the same on both banks----
-;Start
-;    BANK_PROLOGUE
-;BankSwitch
-;    BANK_SWITCH_TRAMPOLINE
-;----End of bank-identical code----
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -760,8 +871,6 @@ UpdateAlienAnimation subroutine
     adc #0                  ; Add carry if it occurred from low byte addition
     sta spriteColorPtr2,x
 
-    ;TODO: clean this all up
-    ;BANK_SWITCH 1,ReturnUpdateCurrentSprite
     rts
 
     include "alien_sprite.asm"
@@ -771,15 +880,277 @@ UpdateAlienAnimation subroutine
     ; Bank 2 epilogue
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ;org  $3FFA
-    ;rorg $FFFA
-    ;BANK_VECTORS
+    org  $3FFA
+    rorg $FFFA
+    BANK_VECTORS
+
+
+
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;; BANK 3: Draw the Marine
+
+    org  $4000
+    rorg $F000
+;----The following code is the same on both banks----
+Start
+    BANK_PROLOGUE
+BankSwitch
+    BANK_SWITCH_TRAMPOLINE
+;----End of bank-identical code----
+
+
+
+UpdateMarine subroutine
+
+    lda counter
+    and %00000001
+    tay
+
+    jsr UpdateMarineSprite
+    jsr UpdateMarineAnimation
+    BANK_SWITCH 1, ReturnUpdateCurrentSprite
+
+
+
+DrawMarine subroutine
+    lda counter
+    and %00000001
+    tay
+
+    ;load the Tails coordinate
+    lda YPos1
+    sta Temp
+
+    ldx #192	; X = 192 scanlines
+.LVScan
+    txa		; X -> A
+    sec		; set carry for subtract
+    sbc Temp	; local coordinate
+    cmp #MarineHeight ; in sprite?
+    bcc .InSprite	; yes, skip over next
+    lda #0		; not in sprite, load 0
+.InSprite
+    lsr        ; Shift right (divide by 2)
+    ;lsr        ; Shift right again (divide by 4)
+    tay		; local coord -> Y
+
+    lda (spritePtr1),y	; lookup color
+    sta WSYNC	; sync w/ scanline
+    sta GRP0	; store bitmap
+    lda (spriteColorPtr1),y ; lookup color
+    sta COLUP0	; store color
+
+    lda (spritePtr2),y	; lookup color
+    sta GRP1	; store bitmap
+    lda (spriteColorPtr2),y ; lookup color
+    sta COLUP1	; store color
+
+    ;Skip to the next line and draw the ring
+    sta WSYNC
+
+    dex ;dec twice because we are doing a 2line kernel
+    dex
+    bne .LVScan	; repeat until 192 lines
+
+    ;Switch back to bank0
+    BANK_SWITCH 0,OverScan
+
+
+
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    ; Bank 1 epilogue
+    ; set the player sprite
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-    org  $2FFA
+
+UpdateMarineSprite subroutine
+
+    lda counter
+    and %00000001
+    tay
+
+    ;Check which state the player is in
+    lda PlayerState1,y
+    cmp WalkingState
+    beq .updateWalkingSprite
+
+    cmp ShootingState
+    beq .updateShootingSprite
+
+    jmp .updateStandingSprite
+
+.updateWalkingSprite 
+
+    ldx #0
+    lda #<ColonialMarineWalking11
+    sta spritePtr1,x
+    inx
+    lda #>ColonialMarineWalking11
+    sta spritePtr1,x
+
+    lda ColonialMarineWalkingSpeed
+    sta animationTiming1,y
+    lda ColonialMarineWalkingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.updateShootingSprite 
+
+    ldx #0
+    lda #<ColonialMarineShooting11
+    sta spritePtr1,x
+    inx
+    lda #>ColonialMarineShooting11
+    sta spritePtr1,x
+
+    lda ColonialMarineShootingSpeed
+    sta animationTiming1,y
+    lda ColonialMarineShootingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.updateStandingSprite
+
+    ldx #0
+    lda #<ColonialMarineStanding11
+    sta spritePtr1,x
+    inx
+    lda #>ColonialMarineStanding11
+    sta spritePtr1,x
+
+    lda ColonialMarineStandingSpeed
+    sta animationTiming1,y
+    lda ColonialMarineStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.doneUpdatingPlayerSprite
+    rts
+
+UpdateMarineAnimation subroutine
+
+    ;don't update the animation if the number of frames is less than 1
+    lda numAnimationFrames1,y     ; Load number of frames
+    cmp #2                     ; Compare with 2
+    bcs .continue               ; Branch if num AnimationFrames >= 2
+    jmp .doneUpdatingAnimation ; Skip if num AnimationFrames <= 1
+
+.continue:
+
+    ;Update the animation time 
+
+    ;Increment the current animation time
+    lda currentAnimationTime1,y
+    clc
+    adc #1
+    sta currentAnimationTime1,y
+
+    ;Check if it is time to increment the frame
+    lda currentAnimationTime1,y ; Load current AnimationTime into accumulator
+    cmp animationTiming1,y ; Compare with animationTiming
+    bcc .doneUpdatingAnimationTime ; Branch if current AnimationTime < animationTiming
+
+    ; If we get here, current AnimationTime >= animationTiming
+    lda #0                     ; Load 0 into accumulator
+    sta currentAnimationTime1,y   ; Reset current AnimationTime to 0
+
+    lda currentAnimationFrame1,y
+    clc
+    adc #1
+    sta currentAnimationFrame1,y  ; Increment the animation frame
+
+.doneUpdatingAnimationTime
+
+    ;Update the animation frame
+
+    lda currentAnimationFrame1,y ; Load current frame into accumulator
+    cmp numAnimationFrames1,y ; Compare with max frames
+    ;beq .doneUpdatingAnimationFrame ; If equal, we're good
+    bcc .doneUpdatingAnimationFrame ; Branch if current AnimationFrame < num AnimationFrames
+
+    ; If we get here, current AnimationFrame >= num AnimationFrames
+    lda #0 ; Load 0 into accumulator
+    sta currentAnimationFrame1,y ; Reset frame back to 0
+
+.doneUpdatingAnimationFrame:
+
+    ;Move the sprite pointer to point to the correct animation frame
+
+    lda currentAnimationFrame1,y  ; Check if frame is 0
+    beq .doneUpdatingSpritePointer                  ; If 0, no adding needed
+
+    ldx currentAnimationFrame1,y ; Use X as our frameCounter
+    
+.addLoop:
+    clc                       ; Clear carry before addition
+    lda spritePtr1           ; Add 52 to pointer
+    adc #64
+    sta spritePtr1
+    lda spritePtr1+1         ; Add carry to high byte
+    adc #0
+    sta spritePtr1+1
+    
+    dex                      ; Decrement frameCounter
+    bne .addLoop             ; Keep going if we're not done
+
+.doneUpdatingSpritePointer
+
+.doneUpdatingAnimation
+
+    ;set up rest of the player sprites
+
+    ;Set the second player sprite
+    ldx #0
+    lda spritePtr1,x        ; Load the low byte value
+    clc                     ; Clear carry before addition
+    adc #16                 ; Add 13 to the value
+    sta spritePtr2,x
+    inx
+    lda spritePtr1,x        ; Load the high byte value
+    adc #0                  ; Add carry if it occurred from low byte addition
+    sta spritePtr2,x
+
+    ;Set the player color
+    ldx #0
+    lda spritePtr1,x        ; Load the low byte value
+    clc                     ; Clear carry before addition
+    adc #32                 ; Point at the color frame
+    sta spriteColorPtr1,x
+    inx
+    lda spritePtr1,x        ; Load the high byte value
+    adc #0                  ; Add carry if it occurred from low byte addition
+    sta spriteColorPtr1,x
+
+    ;Set the second player color
+    ldx #0
+    lda spritePtr1,x        ; Load the low byte value
+    clc                     ; Clear carry before addition
+    adc #48                 ; Point at the color frame
+    sta spriteColorPtr2,x
+    inx
+    lda spritePtr1,x        ; Load the high byte value
+    adc #0                  ; Add carry if it occurred from low byte addition
+    sta spriteColorPtr2,x
+
+    rts
+
+    include "ColonialMarine_sprite.asm"
+
+
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ; Bank 3 epilogue
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    org  $4FFA
     rorg $FFFA
     BANK_VECTORS
