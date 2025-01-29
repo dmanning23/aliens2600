@@ -450,8 +450,8 @@ aliens2531
   .byte %00110000 ; Row 7
   .byte %00100100 ; Row 8
   .byte %01100100 ; Row 9
-  .byte %11101000 ; Row 10
-  .byte %10110011 ; Row 11
+  .byte %11011000 ; Row 10
+  .byte %10101011 ; Row 11
   .byte %10011110 ; Row 12
   .byte %10001110 ; Row 13
   .byte %10111100 ; Row 14
@@ -468,8 +468,8 @@ aliens2532
   .byte %00001000 ; Row 7
   .byte %00010000 ; Row 8
   .byte %00000000 ; Row 9
-  .byte %00010000 ; Row 10
-  .byte %00001000 ; Row 11
+  .byte %00100000 ; Row 10
+  .byte %00010000 ; Row 11
   .byte %00000001 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000010 ; Row 14
@@ -522,8 +522,8 @@ aliens2541
   .byte %00110000 ; Row 7
   .byte %01100001 ; Row 8
   .byte %11101111 ; Row 9
-  .byte %10101000 ; Row 10
-  .byte %10110011 ; Row 11
+  .byte %10011000 ; Row 10
+  .byte %10101011 ; Row 11
   .byte %01011110 ; Row 12
   .byte %01001110 ; Row 13
   .byte %10111100 ; Row 14
@@ -540,8 +540,8 @@ aliens2542
   .byte %00001000 ; Row 7
   .byte %00010000 ; Row 8
   .byte %00000000 ; Row 9
-  .byte %00010000 ; Row 10
-  .byte %00001000 ; Row 11
+  .byte %00100000 ; Row 10
+  .byte %00010000 ; Row 11
   .byte %00000001 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000010 ; Row 14
@@ -601,9 +601,9 @@ aliens5011
   .byte %00110000 ; Row 7
   .byte %01100000 ; Row 8
   .byte %10100000 ; Row 9
-  .byte %10110000 ; Row 10
+  .byte %10010000 ; Row 10
   .byte %10101000 ; Row 11
-  .byte %10010011 ; Row 12
+  .byte %10011011 ; Row 12
   .byte %01001010 ; Row 13
   .byte %00001110 ; Row 14
   .byte %00111100 ; Row 15
@@ -619,9 +619,9 @@ aliens5012
   .byte %00001000 ; Row 7
   .byte %00010000 ; Row 8
   .byte %00000000 ; Row 9
-  .byte %00001000 ; Row 10
+  .byte %00101000 ; Row 10
   .byte %00010000 ; Row 11
-  .byte %00001000 ; Row 12
+  .byte %00000000 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000001 ; Row 14
   .byte %00000010 ; Row 15
@@ -673,9 +673,9 @@ aliens5021
   .byte %00110000 ; Row 7
   .byte %01100000 ; Row 8
   .byte %11100000 ; Row 9
-  .byte %10110000 ; Row 10
+  .byte %10010000 ; Row 10
   .byte %10001000 ; Row 11
-  .byte %10010011 ; Row 12
+  .byte %10011011 ; Row 12
   .byte %11001010 ; Row 13
   .byte %11001110 ; Row 14
   .byte %00111100 ; Row 15
@@ -691,9 +691,9 @@ aliens5022
   .byte %00001000 ; Row 7
   .byte %00010000 ; Row 8
   .byte %00000000 ; Row 9
-  .byte %00001000 ; Row 10
+  .byte %00101000 ; Row 10
   .byte %00010000 ; Row 11
-  .byte %00001000 ; Row 12
+  .byte %00000000 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000001 ; Row 14
   .byte %00000010 ; Row 15
@@ -2507,7 +2507,7 @@ alienhit2531
   .byte %00101000 ; Row 6
   .byte %00110000 ; Row 7
   .byte %01100000 ; Row 8
-  .byte %10110001 ; Row 9
+  .byte %10100001 ; Row 9
   .byte %10010111 ; Row 10
   .byte %10101000 ; Row 11
   .byte %10011011 ; Row 12
@@ -2525,7 +2525,7 @@ alienhit2532
   .byte %00000100 ; Row 6
   .byte %00001000 ; Row 7
   .byte %00010000 ; Row 8
-  .byte %01000100 ; Row 9
+  .byte %01010100 ; Row 9
   .byte %00101000 ; Row 10
   .byte %01010100 ; Row 11
   .byte %00000000 ; Row 12
@@ -2579,8 +2579,8 @@ alienhit2541
   .byte %00101000 ; Row 6
   .byte %00110000 ; Row 7
   .byte %01100000 ; Row 8
-  .byte %00110001 ; Row 9
-  .byte %10010111 ; Row 10
+  .byte %10010001 ; Row 9
+  .byte %10110011 ; Row 10
   .byte %10101000 ; Row 11
   .byte %10011011 ; Row 12
   .byte %01001010 ; Row 13
@@ -2596,9 +2596,9 @@ alienhit2542
   .byte %00000100 ; Row 5
   .byte %00000100 ; Row 6
   .byte %00001000 ; Row 7
-  .byte %00010000 ; Row 8
-  .byte %10000100 ; Row 9
-  .byte %01101000 ; Row 10
+  .byte %10010010 ; Row 8
+  .byte %00101000 ; Row 9
+  .byte %01000100 ; Row 10
   .byte %00010000 ; Row 11
   .byte %00000000 ; Row 12
   .byte %00000001 ; Row 13
@@ -2632,7 +2632,7 @@ alienhit25Color42
   .byte $A4 ; Row 5
   .byte $A4 ; Row 6
   .byte $A4 ; Row 7
-  .byte $A4 ; Row 8
+  .byte $C6 ; Row 8
   .byte $C6 ; Row 9
   .byte $C6 ; Row 10
   .byte $C6 ; Row 11
@@ -2820,10 +2820,10 @@ alienhit5032
   .byte %00000100 ; Row 6
   .byte %00001000 ; Row 7
   .byte %00010000 ; Row 8
-  .byte %00100010 ; Row 9
+  .byte %00101010 ; Row 9
   .byte %00010100 ; Row 10
   .byte %00101010 ; Row 11
-  .byte %00010000 ; Row 12
+  .byte %00010100 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000001 ; Row 14
   .byte %00000010 ; Row 15
@@ -2873,11 +2873,11 @@ alienhit5041
   .byte %01101000 ; Row 5
   .byte %00101000 ; Row 6
   .byte %00110000 ; Row 7
-  .byte %01100000 ; Row 8
-  .byte %10100000 ; Row 9
-  .byte %10011000 ; Row 10
+  .byte %00110000 ; Row 8
+  .byte %10000000 ; Row 9
+  .byte %10111000 ; Row 10
   .byte %10110000 ; Row 11
-  .byte %10001011 ; Row 12
+  .byte %10011001 ; Row 12
   .byte %01001010 ; Row 13
   .byte %00001110 ; Row 14
   .byte %00111100 ; Row 15
@@ -2891,11 +2891,11 @@ alienhit5042
   .byte %00000100 ; Row 5
   .byte %00000100 ; Row 6
   .byte %00001000 ; Row 7
-  .byte %00010000 ; Row 8
-  .byte %00010100 ; Row 9
-  .byte %00100010 ; Row 10
+  .byte %01001001 ; Row 8
+  .byte %00110100 ; Row 9
+  .byte %01000001 ; Row 10
   .byte %00001000 ; Row 11
-  .byte %00010000 ; Row 12
+  .byte %00100010 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000001 ; Row 14
   .byte %00000010 ; Row 15
@@ -2927,7 +2927,7 @@ alienhit50Color42
   .byte $A4 ; Row 5
   .byte $A4 ; Row 6
   .byte $A4 ; Row 7
-  .byte $A4 ; Row 8
+  .byte $C6 ; Row 8
   .byte $C6 ; Row 9
   .byte $C6 ; Row 10
   .byte $C6 ; Row 11
@@ -2954,9 +2954,9 @@ alienhit7511
   .byte %00110000 ; Row 7
   .byte %00100000 ; Row 8
   .byte %00000000 ; Row 9
-  .byte %00000000 ; Row 10
+  .byte %00001000 ; Row 10
   .byte %00001000 ; Row 11
-  .byte %00010011 ; Row 12
+  .byte %00011011 ; Row 12
   .byte %00001010 ; Row 13
   .byte %00001110 ; Row 14
   .byte %00111100 ; Row 15
@@ -2972,9 +2972,9 @@ alienhit7512
   .byte %00001000 ; Row 7
   .byte %00010000 ; Row 8
   .byte %01110000 ; Row 9
-  .byte %01111000 ; Row 10
+  .byte %01110000 ; Row 10
   .byte %01110000 ; Row 11
-  .byte %00001000 ; Row 12
+  .byte %00000000 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000001 ; Row 14
   .byte %00000010 ; Row 15
@@ -3026,9 +3026,9 @@ alienhit7521
   .byte %00110000 ; Row 7
   .byte %00100000 ; Row 8
   .byte %00010000 ; Row 9
-  .byte %00000000 ; Row 10
-  .byte %00011000 ; Row 11
-  .byte %00010011 ; Row 12
+  .byte %00001000 ; Row 10
+  .byte %00010000 ; Row 11
+  .byte %00001011 ; Row 12
   .byte %00001010 ; Row 13
   .byte %00001110 ; Row 14
   .byte %00111100 ; Row 15
@@ -3042,11 +3042,11 @@ alienhit7522
   .byte %00000100 ; Row 5
   .byte %00000100 ; Row 6
   .byte %00001000 ; Row 7
-  .byte %00010000 ; Row 8
-  .byte %10100000 ; Row 9
-  .byte %01111000 ; Row 10
-  .byte %10100000 ; Row 11
-  .byte %01001000 ; Row 12
+  .byte %01010000 ; Row 8
+  .byte %10101000 ; Row 9
+  .byte %01110000 ; Row 10
+  .byte %10101000 ; Row 11
+  .byte %01010000 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000001 ; Row 14
   .byte %00000010 ; Row 15
@@ -3078,7 +3078,7 @@ alienhit75Color22
   .byte $A4 ; Row 5
   .byte $A4 ; Row 6
   .byte $A4 ; Row 7
-  .byte $A4 ; Row 8
+  .byte $C6 ; Row 8
   .byte $C6 ; Row 9
   .byte $C6 ; Row 10
   .byte $C6 ; Row 11
@@ -3096,10 +3096,10 @@ alienhit7531
   .byte %01101000 ; Row 5
   .byte %00101000 ; Row 6
   .byte %00110000 ; Row 7
-  .byte %00100000 ; Row 8
-  .byte %00010000 ; Row 9
-  .byte %00000000 ; Row 10
-  .byte %00011000 ; Row 11
+  .byte %00110000 ; Row 8
+  .byte %00100000 ; Row 9
+  .byte %00010000 ; Row 10
+  .byte %00101000 ; Row 11
   .byte %00010011 ; Row 12
   .byte %00001010 ; Row 13
   .byte %00001110 ; Row 14
@@ -3114,10 +3114,10 @@ alienhit7532
   .byte %00000100 ; Row 5
   .byte %00000100 ; Row 6
   .byte %00001000 ; Row 7
-  .byte %00010000 ; Row 8
-  .byte %01100000 ; Row 9
-  .byte %10111000 ; Row 10
-  .byte %01100000 ; Row 11
+  .byte %10001000 ; Row 8
+  .byte %01010100 ; Row 9
+  .byte %10101000 ; Row 10
+  .byte %01010100 ; Row 11
   .byte %10001000 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000001 ; Row 14
@@ -3150,7 +3150,7 @@ alienhit75Color32
   .byte $A4 ; Row 5
   .byte $A4 ; Row 6
   .byte $A4 ; Row 7
-  .byte $A4 ; Row 8
+  .byte $C6 ; Row 8
   .byte $C6 ; Row 9
   .byte $C6 ; Row 10
   .byte $C6 ; Row 11
@@ -3169,10 +3169,10 @@ alienhit7541
   .byte %00101000 ; Row 6
   .byte %00110000 ; Row 7
   .byte %00100000 ; Row 8
-  .byte %00000000 ; Row 9
-  .byte %00010000 ; Row 10
-  .byte %00101000 ; Row 11
-  .byte %00010011 ; Row 12
+  .byte %00100000 ; Row 9
+  .byte %00011000 ; Row 10
+  .byte %00110000 ; Row 11
+  .byte %00011011 ; Row 12
   .byte %00001010 ; Row 13
   .byte %00001110 ; Row 14
   .byte %00111100 ; Row 15
@@ -3185,12 +3185,12 @@ alienhit7542
   .byte %00000100 ; Row 4
   .byte %00000100 ; Row 5
   .byte %00000100 ; Row 6
-  .byte %00001000 ; Row 7
-  .byte %00010000 ; Row 8
-  .byte %10100000 ; Row 9
-  .byte %00101000 ; Row 10
-  .byte %10010000 ; Row 11
-  .byte %00001000 ; Row 12
+  .byte %10001000 ; Row 7
+  .byte %01010010 ; Row 8
+  .byte %10001000 ; Row 9
+  .byte %00100010 ; Row 10
+  .byte %10001000 ; Row 11
+  .byte %00000000 ; Row 12
   .byte %00000001 ; Row 13
   .byte %00000001 ; Row 14
   .byte %00000010 ; Row 15
@@ -3221,8 +3221,8 @@ alienhit75Color42
   .byte $A4 ; Row 4
   .byte $A4 ; Row 5
   .byte $A4 ; Row 6
-  .byte $A4 ; Row 7
-  .byte $A4 ; Row 8
+  .byte $C6 ; Row 7
+  .byte $C6 ; Row 8
   .byte $C6 ; Row 9
   .byte $C6 ; Row 10
   .byte $C6 ; Row 11
