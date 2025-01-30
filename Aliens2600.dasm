@@ -782,20 +782,38 @@ UpdateAlienSprite subroutine
     beq .updateWalkingSprite
 
     cmp StandingState
-    beq .updateStandingSprite
+    beq .jumpUpdateStandingSprite
 
     jmp .updateStunnedSprite
 
+.jumpUpdateStandingSprite ;out of range!
+    jmp .updateStandingSprite
+
 .updateWalkingSprite 
 
-    ;TODO: check the health
+    ;check the health
+    lda AlienHealth
+    cmp #4
+    beq .walking100
 
+    ;set the walking hit color
     ldx #0
-    lda #<alienwalk11
-    sta spritePtr1,x
+    lda #<alienw25Color11
+    sta spriteColorPtr1,x
     inx
-    lda #>alienwalk11
-    sta spritePtr1,x
+    lda #>alienw25Color11
+    sta spriteColorPtr1,x
+
+    lda AlienHealth
+    cmp #3
+    beq .walking25
+
+    cmp #2
+    beq .walking50
+
+    jmp .walking75
+
+.walking100
 
     ;set the walking color
     ldx #0
@@ -805,9 +823,61 @@ UpdateAlienSprite subroutine
     lda #>alienwalkColor11
     sta spriteColorPtr1,x
 
+    ldx #0
+    lda #<alienwalk11
+    sta spritePtr1,x
+    inx
+    lda #>alienwalk11
+    sta spritePtr1,x
+
     lda alienwalkSpeed
     sta animationTiming1,y
     lda alienwalkFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.walking25
+    ldx #0
+    lda #<alienw2511
+    sta spritePtr1,x
+    inx
+    lda #>alienw2511
+    sta spritePtr1,x
+
+    lda alienw25Speed
+    sta animationTiming1,y
+    lda alienw25Frames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.walking50
+    ldx #0
+    lda #<alienw5011
+    sta spritePtr1,x
+    inx
+    lda #>alienw5011
+    sta spritePtr1,x
+
+    lda alienw50Speed
+    sta animationTiming1,y
+    lda alienw50Frames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.walking75
+    ldx #0
+    lda #<alienw7511
+    sta spritePtr1,x
+    inx
+    lda #>alienw7511
+    sta spritePtr1,x
+
+    lda alienw75Speed
+    sta animationTiming1,y
+    lda alienw75Frames
     sta numAnimationFrames1,y
 
     jmp .doneUpdatingPlayerSprite
