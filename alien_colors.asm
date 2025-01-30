@@ -177,3 +177,39 @@ alienhit25Color12
   .byte $88 ; Row 14
   .byte $88 ; Row 15
   .byte $88 ; Row 16
+
+alienDeathColor11
+  .byte $7A ; Row 1
+  .byte $7A ; Row 2
+  .byte $7A ; Row 3
+  .byte $7A ; Row 4
+  .byte $7A ; Row 5
+  .byte $7A ; Row 6
+  .byte $7A ; Row 7
+  .byte $7A ; Row 8
+  .byte $7A ; Row 9
+  .byte $7A ; Row 10
+  .byte $7A ; Row 11
+  .byte $7A ; Row 12
+  .byte $7A ; Row 13
+  .byte $7A ; Row 14
+  .byte $7A ; Row 15
+  .byte $7A ; Row 16
+
+alienDeathColor12
+  .byte $EE ; Row 1
+  .byte $EE ; Row 2
+  .byte $EE ; Row 3
+  .byte $EE ; Row 4
+  .byte $EE ; Row 5
+  .byte $EE ; Row 6
+  .byte $EE ; Row 7
+  .byte $EE ; Row 8
+  .byte $EE ; Row 9
+  .byte $EE ; Row 10
+  .byte $EE ; Row 11
+  .byte $EE ; Row 12
+  .byte $EE ; Row 13
+  .byte $EE ; Row 14
+  .byte $EE ; Row 15
+  .byte $EE ; Row 16

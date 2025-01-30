@@ -13,10 +13,11 @@
 AlienHeight	equ 16*2
 MarineHeight equ 16*2
 
-StandingState   equ #00
-WalkingState    equ #01
-ShootingState    equ #02
+StandingState equ #00
+WalkingState equ #01
+ShootingState equ #02
 StunnedState equ #3
+DeathState equ #4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -325,6 +326,16 @@ UpdateAlienInput subroutine
 
     ldy #1
 
+    ;is teh alien dead?
+    lda AlienHealth
+    bne .checkStunned
+
+    ;the alien is dee eee dee, ded
+
+    jmp .doneUpdatePlayer
+
+.checkStunned
+
     ;is the alien getting shot?
     lda PlayerState1,y
     cmp StunnedState
@@ -419,8 +430,11 @@ UpdateMarineInput subroutine
 
     ;update the alien health?
     lda PlayerState2
+    cmp DeathState
+    beq .doneUpdateAlienHealth ;dont update if the alien is dead
+
     cmp StunnedState
-    beq .doneUpdateAlienHealth
+    beq .doneUpdateAlienHealth ;dont update if the alien is already stunned
 
     ;the alien takes a hit
     lda AlienHealth
@@ -428,13 +442,29 @@ UpdateMarineInput subroutine
     sbc #1
     sta AlienHealth
 
+    ;does that make the alien dead?
+    beq .alienDeath
+
     lda StunnedState
     sta PlayerState2
 
-    lda #30
+    lda #30 ;TODO: why is 30 loaded into the state timer here?
     sta PlayerStateTimer2
 
     ;make sure the animation time is restarted
+    lda #0
+    sta currentAnimationTime2
+    sta currentAnimationFrame2
+
+    jmp .doneUpdateAlienHealth
+
+.alienDeath
+
+    lda DeathState
+    sta PlayerState2
+
+    lda #30 ;TODO: why is 30 loaded into the state timer here?
+    sta PlayerStateTimer2
     lda #0
     sta currentAnimationTime2
     sta currentAnimationFrame2
@@ -784,10 +814,16 @@ UpdateAlienSprite subroutine
     cmp StandingState
     beq .jumpUpdateStandingSprite
 
-    jmp .updateStunnedSprite
+    cmp StunnedState
+    beq .jumpStunnedSprite
+
+    jmp .updateDeathSprite
 
 .jumpUpdateStandingSprite ;out of range!
     jmp .updateStandingSprite
+
+.jumpStunnedSprite ;out of range!
+    jmp .updateStunnedSprite
 
 .updateWalkingSprite 
 
@@ -1038,6 +1074,31 @@ UpdateAlienSprite subroutine
     lda alienhit75Speed
     sta animationTiming1,y
     lda alienhit75Frames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.updateDeathSprite
+
+    ;set the death color
+    ldx #0
+    lda #<alienDeathColor11
+    sta spriteColorPtr1,x
+    inx
+    lda #>alienDeathColor11
+    sta spriteColorPtr1,x
+
+    ;set the death animation
+    ldx #0
+    lda #<alienDeath11
+    sta spritePtr1,x
+    inx
+    lda #>alienDeath11
+    sta spritePtr1,x
+
+    lda alienDeathSpeed
+    sta animationTiming1,y
+    lda alienDeathFrames
     sta numAnimationFrames1,y
 
     jmp .doneUpdatingPlayerSprite

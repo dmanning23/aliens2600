@@ -3,3 +3,5 @@ bin/
 
 *.asm.lst
 *.asm.sym
+
+Thumbs.db

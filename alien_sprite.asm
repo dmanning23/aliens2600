@@ -2237,3 +2237,334 @@ alienhit75Speed:
 alienhit75Frames:
   .byte 4 ; Number of frames
 
+;Death Animation Data:
+alienDeath11
+  .byte %00000000 ; Row 1
+  .byte %01000010 ; Row 2
+  .byte %10000100 ; Row 3
+  .byte %11000000 ; Row 4
+  .byte %01100000 ; Row 5
+  .byte %00100000 ; Row 6
+  .byte %00111000 ; Row 7
+  .byte %01110000 ; Row 8
+  .byte %00000000 ; Row 9
+  .byte %00001000 ; Row 10
+  .byte %00001000 ; Row 11
+  .byte %00111011 ; Row 12
+  .byte %00000001 ; Row 13
+  .byte %00000001 ; Row 14
+  .byte %00110000 ; Row 15
+  .byte %00111100 ; Row 16
+
+alienDeath12
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00001110 ; Row 4
+  .byte %00001110 ; Row 5
+  .byte %00001110 ; Row 6
+  .byte %00000000 ; Row 7
+  .byte %00000000 ; Row 8
+  .byte %01110000 ; Row 9
+  .byte %01110000 ; Row 10
+  .byte %01110000 ; Row 11
+  .byte %00000000 ; Row 12
+  .byte %00001110 ; Row 13
+  .byte %00001110 ; Row 14
+  .byte %00001110 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath21
+  .byte %00000000 ; Row 1
+  .byte %01000110 ; Row 2
+  .byte %01000100 ; Row 3
+  .byte %10000000 ; Row 4
+  .byte %11000000 ; Row 5
+  .byte %01100000 ; Row 6
+  .byte %00111000 ; Row 7
+  .byte %00100100 ; Row 8
+  .byte %00000100 ; Row 9
+  .byte %00001100 ; Row 10
+  .byte %00001011 ; Row 11
+  .byte %00110001 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %01000001 ; Row 14
+  .byte %01100000 ; Row 15
+  .byte %00110100 ; Row 16
+
+alienDeath22
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00001010 ; Row 3
+  .byte %00010101 ; Row 4
+  .byte %00001110 ; Row 5
+  .byte %00000101 ; Row 6
+  .byte %00000010 ; Row 7
+  .byte %01010000 ; Row 8
+  .byte %10101000 ; Row 9
+  .byte %01110000 ; Row 10
+  .byte %10100000 ; Row 11
+  .byte %01001010 ; Row 12
+  .byte %00010101 ; Row 13
+  .byte %00001110 ; Row 14
+  .byte %00010101 ; Row 15
+  .byte %00001010 ; Row 16
+
+alienDeath31
+  .byte %00000000 ; Row 1
+  .byte %01101101 ; Row 2
+  .byte %10000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %10000000 ; Row 5
+  .byte %11010000 ; Row 6
+  .byte %01100101 ; Row 7
+  .byte %00100011 ; Row 8
+  .byte %00000010 ; Row 9
+  .byte %00001110 ; Row 10
+  .byte %00010001 ; Row 11
+  .byte %10100000 ; Row 12
+  .byte %10000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %11000000 ; Row 15
+  .byte %00100001 ; Row 16
+
+alienDeath32
+  .byte %00000000 ; Row 1
+  .byte %00010010 ; Row 2
+  .byte %00100101 ; Row 3
+  .byte %00001010 ; Row 4
+  .byte %00010001 ; Row 5
+  .byte %00000100 ; Row 6
+  .byte %00010000 ; Row 7
+  .byte %10001000 ; Row 8
+  .byte %01010100 ; Row 9
+  .byte %10000000 ; Row 10
+  .byte %01001010 ; Row 11
+  .byte %00001001 ; Row 12
+  .byte %00100010 ; Row 13
+  .byte %00010001 ; Row 14
+  .byte %00000001 ; Row 15
+  .byte %00010100 ; Row 16
+
+alienDeath41
+  .byte %00000000 ; Row 1
+  .byte %01101100 ; Row 2
+  .byte %10000000 ; Row 3
+  .byte %01000000 ; Row 4
+  .byte %01100000 ; Row 5
+  .byte %00000110 ; Row 6
+  .byte %00000001 ; Row 7
+  .byte %00000100 ; Row 8
+  .byte %00000100 ; Row 9
+  .byte %00000001 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %10010000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %01000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath42
+  .byte %00000000 ; Row 1
+  .byte %00010011 ; Row 2
+  .byte %00101000 ; Row 3
+  .byte %00000001 ; Row 4
+  .byte %00000100 ; Row 5
+  .byte %00100001 ; Row 6
+  .byte %00001000 ; Row 7
+  .byte %10010000 ; Row 8
+  .byte %00000010 ; Row 9
+  .byte %01001000 ; Row 10
+  .byte %00000010 ; Row 11
+  .byte %01000101 ; Row 12
+  .byte %00010000 ; Row 13
+  .byte %00000001 ; Row 14
+  .byte %00000100 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath51
+  .byte %00000000 ; Row 1
+  .byte %11000100 ; Row 2
+  .byte %01000000 ; Row 3
+  .byte %00100100 ; Row 4
+  .byte %00000010 ; Row 5
+  .byte %00000001 ; Row 6
+  .byte %00000100 ; Row 7
+  .byte %00000100 ; Row 8
+  .byte %00000001 ; Row 9
+  .byte %10000000 ; Row 10
+  .byte %00010000 ; Row 11
+  .byte %00000000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %01000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath52
+  .byte %00000000 ; Row 1
+  .byte %00111011 ; Row 2
+  .byte %00000001 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %00100100 ; Row 5
+  .byte %10101000 ; Row 6
+  .byte %00010000 ; Row 7
+  .byte %01000010 ; Row 8
+  .byte %00001000 ; Row 9
+  .byte %00000010 ; Row 10
+  .byte %01000001 ; Row 11
+  .byte %00010000 ; Row 12
+  .byte %00000101 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath61
+  .byte %00000000 ; Row 1
+  .byte %11100100 ; Row 2
+  .byte %00000010 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %00000100 ; Row 5
+  .byte %00000000 ; Row 6
+  .byte %10000001 ; Row 7
+  .byte %00000000 ; Row 8
+  .byte %00010000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %01000000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath62
+  .byte %00000000 ; Row 1
+  .byte %00011011 ; Row 2
+  .byte %00100101 ; Row 3
+  .byte %10001000 ; Row 4
+  .byte %00010000 ; Row 5
+  .byte %00000010 ; Row 6
+  .byte %00001010 ; Row 7
+  .byte %01000001 ; Row 8
+  .byte %00000000 ; Row 9
+  .byte %00010001 ; Row 10
+  .byte %00000100 ; Row 11
+  .byte %00000000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath71
+  .byte %00000000 ; Row 1
+  .byte %01000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %10000000 ; Row 4
+  .byte %00010000 ; Row 5
+  .byte %00000000 ; Row 6
+  .byte %00000000 ; Row 7
+  .byte %00000000 ; Row 8
+  .byte %01000000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %00000000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath72
+  .byte %00000000 ; Row 1
+  .byte %10111111 ; Row 2
+  .byte %00010011 ; Row 3
+  .byte %00001010 ; Row 4
+  .byte %01000001 ; Row 5
+  .byte %00010000 ; Row 6
+  .byte %00000001 ; Row 7
+  .byte %00000100 ; Row 8
+  .byte %00000000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %00000000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath81
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %01000000 ; Row 5
+  .byte %00000000 ; Row 6
+  .byte %00000000 ; Row 7
+  .byte %00000000 ; Row 8
+  .byte %00000000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %00000000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath82
+  .byte %00000000 ; Row 1
+  .byte %11111111 ; Row 2
+  .byte %01010001 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %00000100 ; Row 5
+  .byte %00000000 ; Row 6
+  .byte %00000000 ; Row 7
+  .byte %00000000 ; Row 8
+  .byte %00000000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %00000000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath91
+  .byte %00000000 ; Row 1
+  .byte %01000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %00000000 ; Row 5
+  .byte %00000000 ; Row 6
+  .byte %00000000 ; Row 7
+  .byte %00000000 ; Row 8
+  .byte %00000000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %00000000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeath92
+  .byte %00000000 ; Row 1
+  .byte %10111111 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %00000000 ; Row 5
+  .byte %00000000 ; Row 6
+  .byte %00000000 ; Row 7
+  .byte %00000000 ; Row 8
+  .byte %00000000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %00000000 ; Row 12
+  .byte %00000000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %00000000 ; Row 15
+  .byte %00000000 ; Row 16
+
+alienDeathSpeed:
+  .byte 4 ; Animation speed
+
+alienDeathFrames:
+  .byte 9 ; Number of frames
+
