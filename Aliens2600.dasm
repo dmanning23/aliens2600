@@ -788,12 +788,22 @@ UpdateAlienSprite subroutine
 
 .updateWalkingSprite 
 
+    ;TODO: check the health
+
     ldx #0
     lda #<alienwalk11
     sta spritePtr1,x
     inx
     lda #>alienwalk11
     sta spritePtr1,x
+
+    ;set the walking color
+    ldx #0
+    lda #<alienwalkColor11
+    sta spriteColorPtr1,x
+    inx
+    lda #>alienwalkColor11
+    sta spriteColorPtr1,x
 
     lda alienwalkSpeed
     sta animationTiming1,y
@@ -810,6 +820,15 @@ UpdateAlienSprite subroutine
     cmp #4
     beq .standing100
 
+    ;set the standing hit color
+    ldx #0
+    lda #<aliens25Color11
+    sta spriteColorPtr1,x
+    inx
+    lda #>aliens25Color11
+    sta spriteColorPtr1,x
+
+    lda AlienHealth
     cmp #3
     beq .standing25
 
@@ -819,6 +838,15 @@ UpdateAlienSprite subroutine
     jmp .standing75
 
 .standing100
+
+    ;set the standing color
+    ldx #0
+    lda #<alienstandingColor11
+    sta spriteColorPtr1,x
+    inx
+    lda #>alienstandingColor11
+    sta spriteColorPtr1,x
+
     ldx #0
     lda #<alienstanding11
     sta spritePtr1,x
@@ -881,6 +909,14 @@ UpdateAlienSprite subroutine
 
 
 .updateStunnedSprite
+
+    ;set the stunned color
+    ldx #0
+    lda #<alienhit25Color11
+    sta spriteColorPtr1,x
+    inx
+    lda #>alienhit25Color11
+    sta spriteColorPtr1,x
 
     lda AlienHealth
     cmp #3
@@ -996,7 +1032,7 @@ UpdateAlienAnimation subroutine
 .addLoop:
     clc                       ; Clear carry before addition
     lda spritePtr1           ; Add 52 to pointer
-    adc #64
+    adc #32
     sta spritePtr1
     lda spritePtr1+1         ; Add carry to high byte
     adc #0
@@ -1022,31 +1058,21 @@ UpdateAlienAnimation subroutine
     adc #0                  ; Add carry if it occurred from low byte addition
     sta spritePtr2,x
 
-    ;Set the player color
-    ldx #0
-    lda spritePtr1,x        ; Load the low byte value
-    clc                     ; Clear carry before addition
-    adc #32                 ; Point at the color frame
-    sta spriteColorPtr1,x
-    inx
-    lda spritePtr1,x        ; Load the high byte value
-    adc #0                  ; Add carry if it occurred from low byte addition
-    sta spriteColorPtr1,x
-
     ;Set the second player color
     ldx #0
-    lda spritePtr1,x        ; Load the low byte value
+    lda spriteColorPtr1,x        ; Load the low byte value
     clc                     ; Clear carry before addition
-    adc #48                 ; Point at the color frame
+    adc #16                 ; Point at the color frame
     sta spriteColorPtr2,x
     inx
-    lda spritePtr1,x        ; Load the high byte value
+    lda spriteColorPtr1,x        ; Load the high byte value
     adc #0                  ; Add carry if it occurred from low byte addition
     sta spriteColorPtr2,x
 
     rts
 
     include "alien_sprite.asm"
+    include "alien_colors.asm"
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
