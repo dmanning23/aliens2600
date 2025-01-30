@@ -18,6 +18,7 @@ WalkingState equ #01
 ShootingState equ #02
 StunnedState equ #3
 DeathState equ #4
+DeadState equ #5
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -332,6 +333,14 @@ UpdateAlienInput subroutine
 
     ;the alien is dee eee dee, ded
 
+    ;check if the player is done dying
+    lda PlayerStateTimer2
+    bne .doneUpdatePlayer
+
+    ;hey if it gets here the player is done dying
+    lda DeadState
+    sta PlayerState2
+
     jmp .doneUpdatePlayer
 
 .checkStunned
@@ -433,6 +442,9 @@ UpdateMarineInput subroutine
     cmp DeathState
     beq .doneUpdateAlienHealth ;dont update if the alien is dead
 
+    cmp DeadState
+    beq .doneUpdateAlienHealth ;dont update if the alien is dead
+
     cmp StunnedState
     beq .doneUpdateAlienHealth ;dont update if the alien is already stunned
 
@@ -448,7 +460,7 @@ UpdateMarineInput subroutine
     lda StunnedState
     sta PlayerState2
 
-    lda #30 ;TODO: why is 30 loaded into the state timer here?
+    lda #30 ;load 30 into the state timer to count down the stun time
     sta PlayerStateTimer2
 
     ;make sure the animation time is restarted
@@ -463,7 +475,7 @@ UpdateMarineInput subroutine
     lda DeathState
     sta PlayerState2
 
-    lda #30 ;TODO: why is 30 loaded into the state timer here?
+    lda #95 ;load 60 into the state timer to count down the dying animation
     sta PlayerStateTimer2
     lda #0
     sta currentAnimationTime2
@@ -749,6 +761,12 @@ UpdateAlien subroutine
 
 
 DrawAlien subroutine
+
+    ;is the alien dead?
+    lda PlayerState2
+    cmp DeadState
+    beq .dontDrawingAlien
+
     lda counter
     and %00000001
     tay
@@ -788,6 +806,16 @@ DrawAlien subroutine
     dex
     bne .LVScan	; repeat until 192 lines
 
+    jmp .doneDrawingAlien
+
+.dontDrawingAlien
+    ldx #193	; X = 192 scanlines
+.skipLVScan
+    sta WSYNC
+    dex
+    bne .skipLVScan	; repeat until 192 lines
+
+.doneDrawingAlien
     ;Switch back to bank0
     BANK_SWITCH 0,OverScan
 
