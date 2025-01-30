@@ -12,10 +12,15 @@ https://github.com/dmanning23/aliens2600/releases
 ### How to play
 
 Explore the colony on LV4-2600
+
 Avoid Xenomorphs (or shoot the shit out of them)
+
 Rescue Newt
+
 Defeat the Xenomorph Queen
+
 Get back to the dropship before the colony asplode
+
 Punch-Out in the landing bay: Loader Vs Queen!
 
 
