@@ -1,5 +1,5 @@
 all:
-	dasm *.dasm -f3 -v0 -oBestFwends.bin
+	dasm *.dasm -f3 -v0 -oAliens2600.bin
 
 run:
-	stella BestFwends.bin
+	stella Aliens2600.bin
