@@ -17,7 +17,7 @@ Avoid Xenomorphs (or shoot the shit out of them)
 
 Rescue Newt
 
-Defeat the Xenomorph Queen
+Defeat(?) the Xenomorph Queen
 
 Get back to the dropship before the colony asplode
 
