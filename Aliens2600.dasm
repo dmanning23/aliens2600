@@ -153,6 +153,17 @@ Reset_0
 
 NextFrame subroutine
 
+    lsr SWCHB	; test Game Reset switch
+    bcc .reset	; reset?
+
+    jmp .continue ;don't reset
+
+.reset
+
+    jsr InitializeVariables
+
+.continue
+
     ; 1 + 3 lines of VSYNC
     VERTICAL_SYNC
 
