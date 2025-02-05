@@ -187,13 +187,8 @@ NextFrame subroutine
     jsr UpdateMarineInput
     jsr UpdateAlienInput
 
-    ;Check if the characters are colliding
-    jsr CheckCharCollision
-    beq DontKillPlayer
-
-    jsr KillPlayer
-
-DontKillPlayer
+    ;Do the player collition logic
+    jsr PlayerAlienCollisionLogic
 
     ; Switch to Bank 2 routine
     BANK_SWITCH 1,UpdateCurrentSprite
@@ -709,6 +704,27 @@ UpdateMarineInput subroutine
 .doneUpdatePlayer
 
     rts
+
+
+
+PlayerAlienCollisionLogic subroutine
+    ;check if the alien is dead
+    lda PlayerState2
+    cmp DeadState
+    beq .dontKillPlayer
+
+    cmp DeathState
+    beq .dontKillPlayer
+
+    ;Check if the characters are colliding
+    jsr CheckCharCollision
+    beq .dontKillPlayer
+
+    jsr KillPlayer
+
+.dontKillPlayer
+    rts
+
 
 
 
