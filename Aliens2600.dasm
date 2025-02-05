@@ -558,6 +558,9 @@ UpdateMarineInput subroutine
 
 .checkHoldRight
 
+    lda #0
+    sta Temp
+
     ;check if the player is holding right
     lda #%10001000	;right?
     and controllerMask
@@ -570,6 +573,9 @@ UpdateMarineInput subroutine
     lda WalkingState
     sta PlayerState1,y
 
+    lda #1
+    sta Temp
+
     ;set the player to facing right
     lda #1
     sta FaceRight1,y
@@ -580,21 +586,22 @@ UpdateMarineInput subroutine
     adc #1
     sta XPos1,y
 
-    jmp .doneUpdatePlayer
-
 .checkHoldingLeft
 
     ;check if the player is holding left
     lda #%01000100	;left?
     and controllerMask
     and SWCHA
-    bne .standing ;if not, the player is standing still
+    bne .checkHoldingDown ;if not, the player is standing still
 
     ;if they are:
 
     ;set the player state
     lda WalkingState
     sta PlayerState1,y
+
+    lda #1
+    sta Temp
 
     ;set the player to facing left
     lda #0
@@ -606,9 +613,56 @@ UpdateMarineInput subroutine
     sbc #1
     sta XPos1,y
 
-    jmp .doneUpdatePlayer
+.checkHoldingDown
+
+    ;check if the player is holding down
+    lda #%00100010	;down?
+    and controllerMask
+    and SWCHA
+    bne .checkHoldingUp ;Check if the player is walking up
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+    
+    lda #1
+    sta Temp
+
+    ;update the players position
+    lda YPos1,y
+    sec
+    sbc #1
+    sta YPos1,y
+
+.checkHoldingUp
+
+    ;check if the player is holding up
+    lda #%00010001	;up?
+    and controllerMask
+    and SWCHA
+    bne .standing ;If it gets here, the player is not walking up
+
+    ;if they are:
+
+    ;set the player statey
+    lda WalkingState
+    sta PlayerState1,y
+    
+    lda #1
+    sta Temp
+
+    ;update the players position
+    lda YPos1,y
+    clc
+    adc #1
+    sta YPos1,y
 
 .standing
+
+    lda Temp
+    bne .doneUpdatePlayer
 
     ;set the player state
     lda StandingState
