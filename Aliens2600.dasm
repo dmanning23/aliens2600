@@ -187,6 +187,14 @@ NextFrame subroutine
     jsr UpdateMarineInput
     jsr UpdateAlienInput
 
+    ;Check if the characters are colliding
+    jsr CheckCharCollision
+    beq DontKillPlayer
+
+    jsr KillPlayer
+
+DontKillPlayer
+
     ; Switch to Bank 2 routine
     BANK_SWITCH 1,UpdateCurrentSprite
 
@@ -213,6 +221,7 @@ OverScan
     TIMER_WAIT
     ; total = 262 lines, go to next frame
     jmp NextFrame
+
 
 
 
@@ -317,8 +326,6 @@ SetCharacter subroutine
     and %00000001
     tay
     rts
-
-
 
 
 
@@ -495,10 +502,41 @@ UpdateAlienInput subroutine
 
 UpdateMarineInput subroutine
 
+    ;dec the state timer
+    dec PlayerStateTimer1
+
     lda #%11110000
     sta controllerMask
 
     ldy #0
+
+.checkPlayerDeath
+
+    lda PlayerState1
+    cmp DeathState
+    bne .checkPlayerDead
+
+    ;check if the player is done dying
+    lda PlayerStateTimer1
+    bne .gotoDoneUpdatePlayer
+
+    ;hey if it gets here the player is done dying
+    lda DeadState
+    sta PlayerState1
+
+    jmp .doneUpdatePlayer
+
+.checkPlayerDead
+    lda PlayerState1
+    cmp DeadState
+    beq .gotoDoneUpdatePlayer
+
+    jmp .checkButtonInput
+
+.gotoDoneUpdatePlayer
+    jmp .doneUpdatePlayer
+    
+.checkButtonInput
 
     ;check if the button is being held
     bit INPT4
@@ -674,6 +712,65 @@ UpdateMarineInput subroutine
 
 
 
+CheckCharCollision subroutine
+    ; Check if |XPos1 - XPos2| < width(12)
+    sec
+    lda XPos1
+    sbc XPos2
+    bcs .skip1      ; If positive, skip negation
+    eor #$FF        ; Negate
+    adc #1
+.skip1:
+    cmp #12          ; width is immediate value
+    bcs .noCollision
+
+    ; Check if |YPos1 - YPos2| < height(24)
+    sec
+    lda YPos1
+    sbc YPos2
+    bcs .skip2      ; If positive, skip negation
+    eor #$FF        ; Negate
+    adc #1
+.skip2:
+    cmp #24         ; height is immediate value
+    bcs .noCollision
+
+    ; If we get here, there is a collision
+    lda #1
+    rts
+
+.noCollision:
+    lda #0
+    rts
+
+
+
+
+KillPlayer subroutine
+    ;is the player already dead
+    lda PlayerState1
+    cmp DeadState
+    beq .alreadyDead
+
+    cmp DeathState
+    beq .alreadyDead
+
+    ;set the player to dying
+    lda DeathState
+    sta PlayerState1
+
+    lda #238 ;load 60 into the state timer to count down the dying animation
+    sta PlayerStateTimer1
+    lda #0
+    sta currentAnimationTime1
+    sta currentAnimationFrame1
+
+.alreadyDead
+    rts
+
+
+
+
 
 
 
@@ -685,6 +782,20 @@ UpdateMarineInput subroutine
     org  $1FFA
     rorg $FFFA
     BANK_VECTORS
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -726,12 +837,6 @@ ReturnUpdateCurrentSprite
 
     ;switch back to bank 0
     BANK_SWITCH 0,FinishUnderscan
-
-
-
-
-
-
 
 
 
@@ -852,6 +957,12 @@ LinesOfFrame subRoutine
     org  $2FFA
     rorg $FFFA
     BANK_VECTORS
+
+
+
+
+
+
 
 
 
@@ -1372,6 +1483,15 @@ UpdateAlienAnimation subroutine
 
 
 
+
+
+
+
+
+
+
+
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;; BANK 3: Draw the Marine
 
@@ -1399,6 +1519,12 @@ UpdateMarine subroutine
 
 
 DrawMarine subroutine
+
+    ;is the marin dead?
+    lda PlayerState1
+    cmp DeadState
+    beq .dontDrawingMarine
+
     lda counter
     and %00000001
     tay
@@ -1438,6 +1564,17 @@ DrawMarine subroutine
     dex
     bne .LVScan	; repeat until 192 lines
 
+    jmp .doneDrawingMarine
+
+.dontDrawingMarine
+    ldx #193	; X = 192 scanlines
+.skipLVScan
+    sta WSYNC
+    dex
+    bne .skipLVScan	; repeat until 192 lines
+
+.doneDrawingMarine
+
     ;Switch back to bank0
     BANK_SWITCH 0,OverScan
 
@@ -1463,6 +1600,9 @@ UpdateMarineSprite subroutine
 
     cmp ShootingState
     beq .updateShootingSprite
+
+    cmp DeathState
+    beq .updateDeathSprite
 
     jmp .updateStandingSprite
 
@@ -1494,6 +1634,22 @@ UpdateMarineSprite subroutine
     lda ColonialMarineShootingSpeed
     sta animationTiming1,y
     lda ColonialMarineShootingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneUpdatingPlayerSprite
+
+.updateDeathSprite
+
+    ldx #0
+    lda #<ColonialMarineDeath11
+    sta spritePtr1,x
+    inx
+    lda #>ColonialMarineDeath11
+    sta spritePtr1,x
+
+    lda ColonialMarineDeathSpeed
+    sta animationTiming1,y
+    lda ColonialMarineDeathFrames
     sta numAnimationFrames1,y
 
     jmp .doneUpdatingPlayerSprite
