@@ -1599,11 +1599,299 @@ ColonialMarineShootingColor42
   .byte $0A ; Row 15
   .byte $FE ; Row 16
 
+ColonialMarineShooting51
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %10000000 ; Row 5
+  .byte %10000000 ; Row 6
+  .byte %10000000 ; Row 7
+  .byte %01000000 ; Row 8
+  .byte %01000000 ; Row 9
+  .byte %01100000 ; Row 10
+  .byte %01100000 ; Row 11
+  .byte %10010000 ; Row 12
+  .byte %11101000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %01100000 ; Row 15
+  .byte %01100000 ; Row 16
+
+ColonialMarineShooting52
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %00001100 ; Row 5
+  .byte %00001000 ; Row 6
+  .byte %00001000 ; Row 7
+  .byte %00010000 ; Row 8
+  .byte %00010000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %01100000 ; Row 12
+  .byte %00010000 ; Row 13
+  .byte %01111100 ; Row 14
+  .byte %00011000 ; Row 15
+  .byte %00000000 ; Row 16
+
+ColonialMarineShootingColor51
+  .byte $00 ; Row 1
+  .byte $00 ; Row 2
+  .byte $DA ; Row 3
+  .byte $F4 ; Row 4
+  .byte $DA ; Row 5
+  .byte $DA ; Row 6
+  .byte $DA ; Row 7
+  .byte $DA ; Row 8
+  .byte $DA ; Row 9
+  .byte $DA ; Row 10
+  .byte $DA ; Row 11
+  .byte $DA ; Row 12
+  .byte $DA ; Row 13
+  .byte $2E ; Row 14
+  .byte $2E ; Row 15
+  .byte $F8 ; Row 16
+
+ColonialMarineShootingColor52
+  .byte $00 ; Row 1
+  .byte $00 ; Row 2
+  .byte $F4 ; Row 3
+  .byte $F4 ; Row 4
+  .byte $C6 ; Row 5
+  .byte $C6 ; Row 6
+  .byte $C6 ; Row 7
+  .byte $C6 ; Row 8
+  .byte $C6 ; Row 9
+  .byte $C6 ; Row 10
+  .byte $C6 ; Row 11
+  .byte $C6 ; Row 12
+  .byte $C6 ; Row 13
+  .byte $0A ; Row 14
+  .byte $0A ; Row 15
+  .byte $FE ; Row 16
+
+ColonialMarineShooting61
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %10000000 ; Row 5
+  .byte %10000000 ; Row 6
+  .byte %10000000 ; Row 7
+  .byte %01000000 ; Row 8
+  .byte %01000000 ; Row 9
+  .byte %01100000 ; Row 10
+  .byte %01100000 ; Row 11
+  .byte %10010000 ; Row 12
+  .byte %11101000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %01100000 ; Row 15
+  .byte %01100000 ; Row 16
+
+ColonialMarineShooting62
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %00001100 ; Row 5
+  .byte %00001000 ; Row 6
+  .byte %00001000 ; Row 7
+  .byte %00010000 ; Row 8
+  .byte %00010000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %01100000 ; Row 12
+  .byte %00010000 ; Row 13
+  .byte %01111100 ; Row 14
+  .byte %00011000 ; Row 15
+  .byte %00000000 ; Row 16
+
+ColonialMarineShootingColor61
+  .byte $00 ; Row 1
+  .byte $00 ; Row 2
+  .byte $DA ; Row 3
+  .byte $F4 ; Row 4
+  .byte $DA ; Row 5
+  .byte $DA ; Row 6
+  .byte $DA ; Row 7
+  .byte $DA ; Row 8
+  .byte $DA ; Row 9
+  .byte $DA ; Row 10
+  .byte $DA ; Row 11
+  .byte $DA ; Row 12
+  .byte $DA ; Row 13
+  .byte $2E ; Row 14
+  .byte $2E ; Row 15
+  .byte $F8 ; Row 16
+
+ColonialMarineShootingColor62
+  .byte $00 ; Row 1
+  .byte $00 ; Row 2
+  .byte $F4 ; Row 3
+  .byte $F4 ; Row 4
+  .byte $C6 ; Row 5
+  .byte $C6 ; Row 6
+  .byte $C6 ; Row 7
+  .byte $C6 ; Row 8
+  .byte $C6 ; Row 9
+  .byte $C6 ; Row 10
+  .byte $C6 ; Row 11
+  .byte $C6 ; Row 12
+  .byte $C6 ; Row 13
+  .byte $0A ; Row 14
+  .byte $0A ; Row 15
+  .byte $FE ; Row 16
+
+ColonialMarineShooting71
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %10000000 ; Row 5
+  .byte %10000000 ; Row 6
+  .byte %10000000 ; Row 7
+  .byte %01000000 ; Row 8
+  .byte %01000000 ; Row 9
+  .byte %01100000 ; Row 10
+  .byte %01100000 ; Row 11
+  .byte %10010000 ; Row 12
+  .byte %11101000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %01100000 ; Row 15
+  .byte %01100000 ; Row 16
+
+ColonialMarineShooting72
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %00001100 ; Row 5
+  .byte %00001000 ; Row 6
+  .byte %00001000 ; Row 7
+  .byte %00010000 ; Row 8
+  .byte %00010000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %01100000 ; Row 12
+  .byte %00010000 ; Row 13
+  .byte %01111100 ; Row 14
+  .byte %00011000 ; Row 15
+  .byte %00000000 ; Row 16
+
+ColonialMarineShootingColor71
+  .byte $00 ; Row 1
+  .byte $00 ; Row 2
+  .byte $DA ; Row 3
+  .byte $F4 ; Row 4
+  .byte $DA ; Row 5
+  .byte $DA ; Row 6
+  .byte $DA ; Row 7
+  .byte $DA ; Row 8
+  .byte $DA ; Row 9
+  .byte $DA ; Row 10
+  .byte $DA ; Row 11
+  .byte $DA ; Row 12
+  .byte $DA ; Row 13
+  .byte $2E ; Row 14
+  .byte $2E ; Row 15
+  .byte $F8 ; Row 16
+
+ColonialMarineShootingColor72
+  .byte $00 ; Row 1
+  .byte $00 ; Row 2
+  .byte $F4 ; Row 3
+  .byte $F4 ; Row 4
+  .byte $C6 ; Row 5
+  .byte $C6 ; Row 6
+  .byte $C6 ; Row 7
+  .byte $C6 ; Row 8
+  .byte $C6 ; Row 9
+  .byte $C6 ; Row 10
+  .byte $C6 ; Row 11
+  .byte $C6 ; Row 12
+  .byte $C6 ; Row 13
+  .byte $0A ; Row 14
+  .byte $0A ; Row 15
+  .byte $FE ; Row 16
+
+ColonialMarineShooting81
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %10000000 ; Row 5
+  .byte %10000000 ; Row 6
+  .byte %10000000 ; Row 7
+  .byte %01000000 ; Row 8
+  .byte %01000000 ; Row 9
+  .byte %01100000 ; Row 10
+  .byte %01100000 ; Row 11
+  .byte %10010000 ; Row 12
+  .byte %11101000 ; Row 13
+  .byte %00000000 ; Row 14
+  .byte %01100000 ; Row 15
+  .byte %01100000 ; Row 16
+
+ColonialMarineShooting82
+  .byte %00000000 ; Row 1
+  .byte %00000000 ; Row 2
+  .byte %00000000 ; Row 3
+  .byte %00000000 ; Row 4
+  .byte %00001100 ; Row 5
+  .byte %00001000 ; Row 6
+  .byte %00001000 ; Row 7
+  .byte %00010000 ; Row 8
+  .byte %00010000 ; Row 9
+  .byte %00000000 ; Row 10
+  .byte %00000000 ; Row 11
+  .byte %01100000 ; Row 12
+  .byte %00010000 ; Row 13
+  .byte %01111100 ; Row 14
+  .byte %00011000 ; Row 15
+  .byte %00000000 ; Row 16
+
+ColonialMarineShootingColor81
+  .byte $00 ; Row 1
+  .byte $00 ; Row 2
+  .byte $DA ; Row 3
+  .byte $F4 ; Row 4
+  .byte $DA ; Row 5
+  .byte $DA ; Row 6
+  .byte $DA ; Row 7
+  .byte $DA ; Row 8
+  .byte $DA ; Row 9
+  .byte $DA ; Row 10
+  .byte $DA ; Row 11
+  .byte $DA ; Row 12
+  .byte $DA ; Row 13
+  .byte $2E ; Row 14
+  .byte $2E ; Row 15
+  .byte $F8 ; Row 16
+
+ColonialMarineShootingColor82
+  .byte $00 ; Row 1
+  .byte $00 ; Row 2
+  .byte $F4 ; Row 3
+  .byte $F4 ; Row 4
+  .byte $C6 ; Row 5
+  .byte $C6 ; Row 6
+  .byte $C6 ; Row 7
+  .byte $C6 ; Row 8
+  .byte $C6 ; Row 9
+  .byte $C6 ; Row 10
+  .byte $C6 ; Row 11
+  .byte $C6 ; Row 12
+  .byte $C6 ; Row 13
+  .byte $0A ; Row 14
+  .byte $0A ; Row 15
+  .byte $FE ; Row 16
+
 ColonialMarineShootingSpeed:
   .byte 2 ; Animation speed
 
 ColonialMarineShootingFrames:
-  .byte 4 ; Number of frames
+  .byte 8 ; Number of frames
 
 ;Death Animation Data:
 ColonialMarineDeath11

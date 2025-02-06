@@ -405,6 +405,8 @@ UpdateAlienInput subroutine
     adc #1
     sta XPos1,y
 
+    ;TODO: clamp the players position
+
 .checkHoldingLeft
 
     ;check if the player is holding left
@@ -432,6 +434,8 @@ UpdateAlienInput subroutine
     sbc #1
     sta XPos1,y
 
+    ;TODO: clamp the players position
+
 .checkHoldingDown
 
     ;check if the player is holding down
@@ -454,6 +458,8 @@ UpdateAlienInput subroutine
     sec
     sbc #1
     sta YPos1,y
+
+    ;TODO: clamp the players position
 
 .checkHoldingUp
 
@@ -478,6 +484,8 @@ UpdateAlienInput subroutine
     adc #1
     sta YPos1,y
 
+    ;TODO: clamp the players position
+
 .standing
 
     lda Temp
@@ -498,8 +506,16 @@ UpdateAlienInput subroutine
 UpdateMarineInput subroutine
 
     ;dec the state timer
+    lda PlayerStateTimer1
+    bne .updatePlayerTimer
+    
+    jmp .doneUpdatePlayerTimer
+
+.updatePlayerTimer
+
     dec PlayerStateTimer1
 
+.doneUpdatePlayerTimer
     lda #%11110000
     sta controllerMask
 
@@ -526,11 +542,17 @@ UpdateMarineInput subroutine
     cmp DeadState
     beq .gotoDoneUpdatePlayer
 
-    jmp .checkButtonInput
+    jmp .checkPlayerShooting
 
-.gotoDoneUpdatePlayer
-    jmp .doneUpdatePlayer
-    
+.checkPlayerShooting
+    lda PlayerState1
+    cmp ShootingState
+    bne .checkButtonInput
+
+    ;use player timer to time shots instead of alien
+    lda PlayerStateTimer1
+    bne .gotoDoneUpdatePlayer
+
 .checkButtonInput
 
     ;check if the button is being held
@@ -541,6 +563,153 @@ UpdateMarineInput subroutine
     lda ShootingState
     sta PlayerState1,y
 
+    ;start the player timer
+    lda #30
+    sta PlayerStateTimer1
+
+    ;restart the animation
+    lda #0
+    sta currentAnimationTime1
+    sta currentAnimationFrame1
+
+    ;TODO: fire off the gun sound
+
+    ;TODO: fix bullet detection
+
+    ;move the alien update to its own subroutine
+    jsr AlienGotShot
+
+.gotoDoneUpdatePlayer
+
+    jmp .doneUpdatePlayer
+
+.checkHoldRight
+
+    lda #0
+    sta Temp
+
+    ;check if the player is holding right
+    lda #%10001000	;right?
+    and controllerMask
+    and SWCHA
+    bne .checkHoldingLeft ;if not, go check if holding left
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+
+    lda #1
+    sta Temp
+
+    ;set the player to facing right
+    lda #1
+    sta FaceRight1,y
+
+    ;update the players position
+    lda XPos1,y
+    clc
+    adc #1
+    sta XPos1,y
+
+    ;TODO: clamp the players position
+
+.checkHoldingLeft
+
+    ;check if the player is holding left
+    lda #%01000100	;left?
+    and controllerMask
+    and SWCHA
+    bne .checkHoldingDown ;if not, the player is standing still
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+
+    lda #1
+    sta Temp
+
+    ;set the player to facing left
+    lda #0
+    sta FaceRight1,y
+
+    ;update the players position
+    lda XPos1,y
+    sec
+    sbc #1
+    sta XPos1,y
+
+    ;TODO: clamp the players position
+
+.checkHoldingDown
+
+    ;check if the player is holding down
+    lda #%00100010	;down?
+    and controllerMask
+    and SWCHA
+    bne .checkHoldingUp ;Check if the player is walking up
+
+    ;if they are:
+
+    ;set the player state
+    lda WalkingState
+    sta PlayerState1,y
+    
+    lda #1
+    sta Temp
+
+    ;update the players position
+    lda YPos1,y
+    sec
+    sbc #1
+    sta YPos1,y
+
+    ;TODO: clamp the players position
+
+.checkHoldingUp
+
+    ;check if the player is holding up
+    lda #%00010001	;up?
+    and controllerMask
+    and SWCHA
+    bne .standing ;If it gets here, the player is not walking up
+
+    ;if they are:
+
+    ;set the player statey
+    lda WalkingState
+    sta PlayerState1,y
+    
+    lda #1
+    sta Temp
+
+    ;update the players position
+    lda YPos1,y
+    clc
+    adc #1
+    sta YPos1,y
+
+    ;TODO: clamp the players position
+
+.standing
+
+    lda Temp
+    bne .doneUpdatePlayer
+
+    ;set the player state
+    lda StandingState
+    sta PlayerState1,y
+
+.doneUpdatePlayer
+
+    rts
+
+
+
+AlienGotShot subroutine
     ;update the alien health?
     lda PlayerState2
     cmp DeathState
@@ -586,122 +755,6 @@ UpdateMarineInput subroutine
     sta currentAnimationFrame2
 
 .doneUpdateAlienHealth
-
-    jmp .doneUpdatePlayer
-
-.checkHoldRight
-
-    lda #0
-    sta Temp
-
-    ;check if the player is holding right
-    lda #%10001000	;right?
-    and controllerMask
-    and SWCHA
-    bne .checkHoldingLeft ;if not, go check if holding left
-
-    ;if they are:
-
-    ;set the player state
-    lda WalkingState
-    sta PlayerState1,y
-
-    lda #1
-    sta Temp
-
-    ;set the player to facing right
-    lda #1
-    sta FaceRight1,y
-
-    ;update the players position
-    lda XPos1,y
-    clc
-    adc #1
-    sta XPos1,y
-
-.checkHoldingLeft
-
-    ;check if the player is holding left
-    lda #%01000100	;left?
-    and controllerMask
-    and SWCHA
-    bne .checkHoldingDown ;if not, the player is standing still
-
-    ;if they are:
-
-    ;set the player state
-    lda WalkingState
-    sta PlayerState1,y
-
-    lda #1
-    sta Temp
-
-    ;set the player to facing left
-    lda #0
-    sta FaceRight1,y
-
-    ;update the players position
-    lda XPos1,y
-    sec
-    sbc #1
-    sta XPos1,y
-
-.checkHoldingDown
-
-    ;check if the player is holding down
-    lda #%00100010	;down?
-    and controllerMask
-    and SWCHA
-    bne .checkHoldingUp ;Check if the player is walking up
-
-    ;if they are:
-
-    ;set the player state
-    lda WalkingState
-    sta PlayerState1,y
-    
-    lda #1
-    sta Temp
-
-    ;update the players position
-    lda YPos1,y
-    sec
-    sbc #1
-    sta YPos1,y
-
-.checkHoldingUp
-
-    ;check if the player is holding up
-    lda #%00010001	;up?
-    and controllerMask
-    and SWCHA
-    bne .standing ;If it gets here, the player is not walking up
-
-    ;if they are:
-
-    ;set the player statey
-    lda WalkingState
-    sta PlayerState1,y
-    
-    lda #1
-    sta Temp
-
-    ;update the players position
-    lda YPos1,y
-    clc
-    adc #1
-    sta YPos1,y
-
-.standing
-
-    lda Temp
-    bne .doneUpdatePlayer
-
-    ;set the player state
-    lda StandingState
-    sta PlayerState1,y
-
-.doneUpdatePlayer
 
     rts
 
