@@ -4,7 +4,7 @@ This is still a work-in-progress!!!
 
 Play it in your browser:
 
-https://javatari.org?ROM=https://github.com/dmanning23/aliens2600/releases/download/v0.1/Aliens2600.bin
+https://javatari.org?ROM=https://github.com/dmanning23/aliens2600/releases/download/v0.2/Aliens2600.bin
 
 Check the Releases page for the latest version:
 https://github.com/dmanning23/aliens2600/releases
@@ -45,4 +45,4 @@ Player 2 (Xenomorph):
 | Button | ??? |
 | Power Switch | How can they cut the power, man? They're animals! |
 
-[![Play Xenomorphs in your browser](Screenshot.png)](https://javatari.org?ROM=https://github.com/dmanning23/aliens2600/releases/download/v0.1/Aliens2600.bin)
+[![Play Xenomorphs in your browser](Screenshot.png)](https://javatari.org?ROM=https://github.com/dmanning23/aliens2600/releases/download/v0.2/Aliens2600.bin)
