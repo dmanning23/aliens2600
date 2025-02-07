@@ -1,6 +1,7 @@
 SFX_F:
     .byte 0, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 4, 4, 4, 4, 4, 4, 4 ; Shoot
     .byte 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 7, 7, 6, 5, 5, 4, 4, 4, 4, 3, 3, 2, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 ; Screech
+    .byte 0, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 29, 27, 25, 23, 21, 19, 17, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0 ; AlienDeath
 
 ; calculate size of SFX_F table and validate size
 SFX_Fcount = * -SFX_F
@@ -13,6 +14,8 @@ SFX_CV:
 sfxSHOOT = *-SFX_CV-1
     .byte 0,$3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f ; Screech
 sfxSCREECH = *-SFX_CV-1
+    .byte 0,$ef, $ee, $ed, $ec, $eb, $ea, $e9, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $78, $79, $7a, $7b, $7c, $7d, $7e, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f ; AlienDeath
+sfxALIENDEATH = *-SFX_CV-1
 
 ; calculate size of SFX_CV table and validate size
 SFX_CVcount = *-SFX_CV

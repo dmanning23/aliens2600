@@ -321,6 +321,8 @@ InitializeVariables subroutine
     sta PlayerStateTimer1
     sta PlayerStateTimer2
 
+    jsr SFX_OFF
+
     rts
 
 
@@ -764,7 +766,10 @@ AlienGotShot subroutine
 
 .alienDeath
 
-    ;TODO: play the alien death sound
+    ;play the alien death sound
+    ldy #sfxALIENDEATH
+    jsr SFX_TRIGGER
+    jsr SetCharacter
 
     lda DeathState
     sta PlayerState2
@@ -889,7 +894,7 @@ BulletCollisionCheck subroutine
     eor #$FF        ; Negate
     adc #1
 .skip2:
-    cmp #24         ; height is immediate value
+    cmp #14         ; height is immediate value
     bcs .noCollision
 
     ; If we get here, there is a collision
