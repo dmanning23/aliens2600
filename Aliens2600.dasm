@@ -574,9 +574,11 @@ UpdateMarineInput subroutine
 
     ;TODO: fire off the gun sound
 
-    ;TODO: fix bullet detection
+    ;Check if the player's bullet will hit the alien
+    jsr BulletCollisionCheck
+    beq .gotoDoneUpdatePlayer
 
-    ;move the alien update to its own subroutine
+    ;The player's bullet hit the alien!
     jsr AlienGotShot
 
 .gotoDoneUpdatePlayer
@@ -839,6 +841,45 @@ KillPlayer subroutine
 
 
 
+BulletCollisionCheck subroutine
+    ;Check if XPos2 is in the correct direction from XPos1
+    lda FaceRight1
+    bne .facingRight
+
+    ;check if XPos2 is less than XPos1
+    lda XPos2
+    cmp XPos1
+    bcs .noCollision
+
+    jmp .checkYPos
+
+.facingRight
+
+    ;check if XPos2 is greater than XPos1
+    lda XPos2
+    cmp XPos1
+    bcc .noCollision
+
+.checkYPos
+
+    ; Check if |YPos1 - YPos2| < height(24)
+    sec
+    lda YPos1
+    sbc YPos2
+    bcs .skip2      ; If positive, skip negation
+    eor #$FF        ; Negate
+    adc #1
+.skip2:
+    cmp #24         ; height is immediate value
+    bcs .noCollision
+
+    ; If we get here, there is a collision
+    lda #1
+    rts
+
+.noCollision:
+    lda #0
+    rts
 
 
 
