@@ -86,6 +86,10 @@ counter .byte
 ;scratch variable
 Temp .byte
 
+; indexes for sound effect driver    
+SFX_LEFT:       ds 1    ; stored in $B1
+SFX_RIGHT:      ds 1    ; stored in $B2
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Code segment
@@ -208,11 +212,16 @@ FinishUnderscan
 OverScan
     TIMER_SETUP 29
 
-    lda $0 ;dont draw the sprite in the overscan
+    ;dont draw the sprite in the overscan
+    lda $0 
     sta GRP0
     sta COLUP0
     sta GRP1
     sta COLUP1
+
+    ;update the sound effect engine
+    jsr SFX_UPDATE
+
     TIMER_WAIT
     ; total = 262 lines, go to next frame
     jmp NextFrame
@@ -572,7 +581,10 @@ UpdateMarineInput subroutine
     sta currentAnimationTime1
     sta currentAnimationFrame1
 
-    ;TODO: fire off the gun sound
+    ;fire off the gun sound
+    ldy #sfxSHOOT
+    jsr SFX_TRIGGER
+    jsr SetCharacter
 
     ;Check if the player's bullet will hit the alien
     jsr BulletCollisionCheck
@@ -732,6 +744,11 @@ AlienGotShot subroutine
     ;does that make the alien dead?
     beq .alienDeath
 
+    ;play the alien screech 
+    ldy #sfxSCREECH
+    jsr SFX_TRIGGER
+    jsr SetCharacter
+
     lda StunnedState
     sta PlayerState2
 
@@ -746,6 +763,8 @@ AlienGotShot subroutine
     jmp .doneUpdateAlienHealth
 
 .alienDeath
+
+    ;TODO: play the alien death sound
 
     lda DeathState
     sta PlayerState2
@@ -882,7 +901,7 @@ BulletCollisionCheck subroutine
     rts
 
 
-
+    include "aliens2600-sfx.asm"
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
