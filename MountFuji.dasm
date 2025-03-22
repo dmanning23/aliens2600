@@ -103,7 +103,7 @@ Start
     CLEAN_START ;Macro to initialize several flags and registers, safely clears memory and TIA
     
     ;start a new game
-    jsr Reset
+    jsr ResetGame
 
 NextFrame
 
@@ -272,7 +272,7 @@ SetHorizPos subroutine
 
 
 
-Reset
+ResetGame
 
     lda #0
     sta counter
@@ -282,15 +282,10 @@ Reset
     sta NUSIZ0
     sta NUSIZ1
 
-    ;lda #$08 ;Flip player2 by setting the third bit of REFP1
-    ;sta REFP1
-
-    ;jsr ResetPlayerColors
-
     ; set up initial positions
-    lda #35 ;p1 position
+    lda #20 ;p1 position
     sta XPos0
-    lda #108 ;p2 position
+    lda #95 ;p2 position
     sta XPos1
 
     ;set the input up
@@ -478,6 +473,9 @@ MovePlayer
 
 
 CharacterUpdate subroutine
+
+    jsr SetPlayerColor
+
     ;Decrement the timer on every character update
     ldx p1Timer,y
     dex
@@ -732,6 +730,22 @@ RestartAnimation
 
 
 SetPlayerAnimation subroutine
+    tya
+    beq .setLoaderAnimation
+
+.setAlienQueenAnimation
+    jsr SetAlienQueenAnimation
+    jmp .doneSettingPlayerAnimation
+
+.setLoaderAnimation
+    jsr SetLoaderAnimation
+
+.doneSettingPlayerAnimation
+    rts
+
+
+
+SetLoaderAnimation subroutine
 .checkStandingAnimation
     lda p1State,y
     cmp StandingState
@@ -857,6 +871,137 @@ SetPlayerAnimation subroutine
 
 
 
+
+SetAlienQueenAnimation subroutine
+.checkStandingAnimation
+    lda p1State,y
+    cmp StandingState
+    beq .setStandingAnimation
+
+    cmp WalkingState
+    beq .setWalkingAnimation
+
+    cmp BeginAttackState
+    beq .setBeginAttackingAnimation
+
+    cmp AttackingState
+    beq .setAttackAnimation
+
+    cmp BlockingState
+    beq .setBlockAnimation
+
+    ;The last possible state
+    jmp .setKnockbackAnimation
+
+.setStandingAnimation
+    ;set the standing animation
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setWalkingAnimation
+
+    ;TODO
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBeginAttackingAnimation
+
+    ;TODO
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setAttackAnimation
+
+    ;TODO
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBlockAnimation
+
+    ;TODO
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setKnockbackAnimation
+
+    ;TODO
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.doneSettingAnimation
+    lda animationTiming1,y
+    lsr
+    sta animationTiming1,y
+    rts
+
+
+
 UpdateAnimation subroutine
 
     ;don't update the animation if the number of frames is less than 1
@@ -940,23 +1085,20 @@ UpdateAnimation subroutine
     adc #0                  ; Add carry if it occurred from low byte addition
     sta spritePtr2,x
 
-    ;Set the second player color
-    ldx #0
-    lda spriteColorPtr1,x        ; Load the low byte value
-    clc                     ; Clear carry before addition
-    adc #24                 ; Point at the color frame
-    sta spriteColorPtr2,x
-    inx
-    lda spriteColorPtr1,x        ; Load the high byte value
-    adc #0                  ; Add carry if it occurred from low byte addition
-    sta spriteColorPtr2,x
-
     rts
 
 
 
-ResetPlayerColors
+SetPlayerColor subroutine
+
     ;Set the player colors to their neutral color
+    tya
+    beq .setP1Color
+
+    jmp .setP2Color
+
+.setP1Color
+
     ldx #00
     lda #<ColorFramePlayer0
     sta spriteColorPtr1,x
@@ -964,17 +1106,23 @@ ResetPlayerColors
     lda #>ColorFramePlayer0
     sta spriteColorPtr1,x
 
-    inx
+    jmp .doneSettingPlayerColor
+
+.setP2Color
+
+    ldx #00
     lda #<ColorFramePlayer1
     sta spriteColorPtr1,x
     inx
     lda #>ColorFramePlayer1
     sta spriteColorPtr1,x
+
+.doneSettingPlayerColor
     rts
 
 
-
 SetBloodyColor
+    ldx #00
     lda #<ColorBlood
     sta spriteColorPtr1,x
     inx
@@ -985,6 +1133,7 @@ SetBloodyColor
 
 
 SetBloodyColor1
+    ldx #00
     lda #<ColorBlood1
     sta spriteColorPtr1,x
     inx
@@ -1019,7 +1168,7 @@ UpdateGameLogic subroutine
     bne .jumpToDoneUpdating
 
     ;the game is over, we've wantched the loser flash red, restart the game
-    jsr Reset
+    jsr ResetGame
 
 .jumpToDoneUpdating
     jmp .doneUpdatingGameLogic
@@ -2918,63 +3067,13 @@ AlienQueenStanding12
   .byte %11100100 ; Row 23 (right)
   .byte %00000000 ; Row 24 (right)
 
-AlienQueenStanding21
-  .byte %00000000 ; Row 1 (left)
-  .byte %00100100 ; Row 2 (left)
-  .byte %00011000 ; Row 3 (left)
-  .byte %00110000 ; Row 4 (left)
-  .byte %00110000 ; Row 5 (left)
-  .byte %00110000 ; Row 6 (left)
-  .byte %00010000 ; Row 7 (left)
-  .byte %00011000 ; Row 8 (left)
-  .byte %00001110 ; Row 9 (left)
-  .byte %00000011 ; Row 10 (left)
-  .byte %00000011 ; Row 11 (left)
-  .byte %00001111 ; Row 12 (left)
-  .byte %00010001 ; Row 13 (left)
-  .byte %00100011 ; Row 14 (left)
-  .byte %01000001 ; Row 15 (left)
-  .byte %01000110 ; Row 16 (left)
-  .byte %01000000 ; Row 17 (left)
-  .byte %01100111 ; Row 18 (left)
-  .byte %00100000 ; Row 19 (left)
-  .byte %00010000 ; Row 20 (left)
-  .byte %00010000 ; Row 21 (left)
-  .byte %00010001 ; Row 22 (left)
-  .byte %00100111 ; Row 23 (left)
-  .byte %00000000 ; Row 24 (left)
-
-AlienQueenStanding22
-  .byte %00000000 ; Row 1 (right)
-  .byte %00010010 ; Row 2 (right)
-  .byte %00001110 ; Row 3 (right)
-  .byte %00011000 ; Row 4 (right)
-  .byte %00110000 ; Row 5 (right)
-  .byte %01100000 ; Row 6 (right)
-  .byte %10000000 ; Row 7 (right)
-  .byte %01000000 ; Row 8 (right)
-  .byte %00110000 ; Row 9 (right)
-  .byte %00110000 ; Row 10 (right)
-  .byte %01100010 ; Row 11 (right)
-  .byte %11000001 ; Row 12 (right)
-  .byte %10000111 ; Row 13 (right)
-  .byte %10111100 ; Row 14 (right)
-  .byte %10100000 ; Row 15 (right)
-  .byte %11100110 ; Row 16 (right)
-  .byte %11111110 ; Row 17 (right)
-  .byte %01101110 ; Row 18 (right)
-  .byte %00001100 ; Row 19 (right)
-  .byte %00111000 ; Row 20 (right)
-  .byte %01110000 ; Row 21 (right)
-  .byte %11100000 ; Row 22 (right)
-  .byte %10000000 ; Row 23 (right)
-  .byte %00000000 ; Row 24 (right)
-
 AlienQueenStandingSpeed:
   .byte 30 ; Animation speed
 
 AlienQueenStandingFrames:
-  .byte 2 ; Number of frames
+  .byte 1 ; Number of frames
+
+
 
 
 
