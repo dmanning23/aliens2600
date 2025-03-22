@@ -13,12 +13,19 @@
 AlienHeight	equ 16*2
 MarineHeight equ 16*2
 
-StandingState equ #00
-WalkingState equ #01
-ShootingState equ #02
-StunnedState equ #3
-DeathState equ #4
-DeadState equ #5
+
+StandingState       equ #00
+WalkingState        equ #01
+ShootingState       equ #02
+StunnedState        equ #03
+DeathState          equ #04
+DeadState           equ #05
+
+
+BeginAttackState    equ #06
+AttackingState      equ #07
+BlockingState       equ #08
+KnockbackState      equ #09
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -78,6 +85,21 @@ currentAnimationFrame2 .byte
 
 ;This variable is used to mask the controller input to map to p1 or p2
 controllerMask  .byte 
+
+;The player's input from the previous frame
+p1PrevInput byte
+p2PrevInput byte
+
+;The player's input from the current frame
+p1Input byte
+p2Input byte
+
+;The input flags are as follows:
+controllerDown		equ #%00000001
+controllerUp		equ #%00000010
+controllerLeft		equ #%00000100
+controllerRight		equ #%00001000
+controllerButton	equ #%00010000
 
 AlienHealth .byte
 
