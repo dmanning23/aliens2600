@@ -1,0 +1,172 @@
+------- FILE Variables.dasm LEVEL 1 PASS 2
+      1  0034 ????	       00 20	   AlienHeight equ	16*2
+      2  0034 ????	       00 20	   MarineHeight equ	16*2
+      3  0035 ????
+      4  0035 ????
+      5  0035 ????						;The states are:
+      6  0035 ????	       00 00	   StandingState equ	#00
+      7  0035 ????	       00 01	   WalkingState equ	#01
+      8  0035 ????	       00 02	   ShootingState equ	#02
+      9  0035 ????	       00 03	   StunnedState equ	#03
+     10  0035 ????	       00 04	   DeathState equ	#04
+     11  0035 ????	       00 05	   DeadState  equ	#05
+     12  0035 ????
+     13  0035 ????						;used in final battle:
+     14  0035 ????	       00 06	   BeginAttackState equ	#06
+     15  0035 ????	       00 07	   AttackingState equ	#07
+Variables.dasm (16): error: Syntax Error '#08'.
+     16  0035 ????	       00 08	   BlockingState equ	#08
+Variables.dasm (17): error: Syntax Error '#09'.
+     17  0035 ????	       00 09	   KnockbackState equ	#09
+     18  0035 ????
+     19  0035 ????
+     20  0035 ????						;The player's X,Y position on the screen
+     21  0035 ????						;Playfield range:
+     22  0035 ????						;vert range: 0 - 164
+     23  0035 ????						;horiz range: 0 - 156
+     24  0035 ????						;TODO: clean up playfield range magic numbers
+     25  0035 ????	       00	   XPos1      .byte.b
+     26  0035 ????	       00	   XPos2      .byte.b
+     27  0036 ????	       00	   YPos1      .byte.b
+     28  0037 ????	       00	   YPos2      .byte.b
+     29  0038 ????
+     30  0038 ????						;Which direction the player is facing
+     31  0038 ????						;0 = Left
+     32  0038 ????						;1 = Right
+     33  0038 ????	       00	   FaceRight1 .byte.b
+     34  0039 ????	       00	   FaceRight2 .byte.b
+     35  003a ????
+     36  003a ????						;Player states
+     37  003a ????	       00	   PlayerState1 .byte.b
+     38  003b ????	       00	   PlayerState2 .byte.b
+     39  003c ????
+     40  003c ????	       00	   PlayerStateTimer1 .byte.b
+     41  003d ????	       00	   PlayerStateTimer2 .byte.b
+     42  003e ????
+     43  003e ????						;This points at the current sprite being drawn
+     44  003e ????	       00 00	   spritePtr1 .word.w
+     45  0040 ????	       00 00	   spritePtr2 .word.w
+     46  0042 ????
+     47  0042 ????						;Pointer to the current color being drawn
+     48  0042 ????	       00 00	   spriteColorPtr1 .word.w
+     49  0044 ????	       00 00	   spriteColorPtr2 .word.w
+     50  0046 ????
+     51  0046 ????						;The timing of the current animation
+     52  0046 ????	       00	   animationTiming1 .byte.b
+     53  0047 ????	       00	   animationTiming2 .byte.b
+     54  0048 ????
+     55  0048 ????						;The number of frames in the current animation
+     56  0048 ????	       00	   numAnimationFrames1 .byte.b
+     57  0049 ????	       00	   numAnimationFrames2 .byte.b
+     58  004a ????
+     59  004a ????						;The animation timer
+     60  004a ????	       00	   currentAnimationTime1 .byte.b
+     61  004b ????	       00	   currentAnimationTime2 .byte.b
+     62  004c ????
+     63  004c ????						;The current animation frame
+     64  004c ????	       00	   currentAnimationFrame1 .byte.b
+     65  004d ????	       00	   currentAnimationFrame2 .byte.b
+     66  004e ????
+     67  004e ????						;This variable is used to mask the controller input to map to p1 or p2
+     68  004e ????	       00	   controllerMask .byte.b
+     69  004f ????
+     70  004f ????						;The player's input from the previous frame
+     71  004f ????	       00	   p1PrevInput byte.b
+     72  0050 ????	       00	   p2PrevInput byte.b
+     73  0051 ????
+     74  0051 ????						;The player's input from the current frame
+     75  0051 ????	       00	   p1Input    byte.b
+     76  0052 ????	       00	   p2Input    byte.b
+     77  0053 ????
+     78  0053 ????						;The input flags are as follows:
+     79  0053 ????	       00 01	   controllerDown equ	#%00000001
+     80  0053 ????	       00 02	   controllerUp equ	#%00000010
+     81  0053 ????	       00 04	   controllerLeft equ	#%00000100
+     82  0053 ????	       00 08	   controllerRight equ	#%00001000
+     83  0053 ????	       00 10	   controllerButton equ	#%00010000
+     84  0053 ????
+     85  0053 ????	       00	   AlienHealth .byte.b
+     86  0054 ????
+     87  0054 ????	       00	   counter    .byte.b
+     88  0055 ????
+     89  0055 ????						;scratch variable
+     90  0055 ????	       00	   Temp       .byte.b
+     91  0056 ????
+     92  0056 ????						; indexes for sound effect driver
+     93  0056 ????	       00	   SFX_LEFT   ds	1	; stored in $B1
+     94  0057 ????	       00	   SFX_RIGHT  ds	1	; stored in $B2
+     95  0058 ????
+     96  0058 ????
+     97  0058 ????
+     98  0058 ????
+     99  0058 ????
+    100  0058 ????
+    101  0058 ????
+    102  0058 ????
+    103  0058 ????
+    104  0058 ????
+    105  0058 ????
+    106  0058 ????
+    107  0058 ????
+    108  0058 ????
+    109  0058 ????						;Whether or not the game is over
+    110  0058 ????						;0 game is not over
+    111  0058 ????						;1 game is over
+    112  0058 ????	       00	   gameOver   byte.b
+    113  0059 ????
+    114  0059 ????						;Timer used to countdown the game over state
+    115  0059 ????	       00	   gameOverTimer byte.b
+    116  005a ????
+    117  005a ????						;State variables
+    118  005a ????	       00	   p1State    byte.b
+    119  005b ????	       00	   p2State    byte.b
+    120  005c ????
+    121  005c ????						;The character timer, used to time various state actions
+    122  005c ????	       00	   p1Timer    byte.b
+    123  005d ????	       00	   p2Timer    byte.b
+    124  005e ????
+    125  005e ????						;The player's input from the previous frame
+    126  005e ????	       00	   p1PrevInput byte.b
+    127  005f ????	       00	   p2PrevInput byte.b
+    128  0060 ????
+    129  0060 ????						;The player's input from the current frame
+    130  0060 ????	       00	   p1Input    byte.b
+    131  0061 ????	       00	   p2Input    byte.b
+    132  0062 ????
+    133  0062 ????						;The input flags are as follows:
+    134  0062 ????	       00 01	   controllerDown equ	#%00000001
+    135  0062 ????	       00 02	   controllerUp equ	#%00000010
+    136  0062 ????	       00 04	   controllerLeft equ	#%00000100
+    137  0062 ????	       00 08	   controllerRight equ	#%00001000
+    138  0062 ????	       00 10	   controllerButton equ	#%00010000
+    139  0062 ????
+    140  0062 ????
+    141  0062 ????
+    142  0062 ????						;These are the timers for the various states
+    143  0062 ????	       00 0c	   BeginAttackTime equ	#12
+    144  0062 ????	       00 0f	   AttackTime equ	#15
+    145  0062 ????	       00 12	   BlockTime  equ	#18
+    146  0062 ????	       00 28	   KnockbackTime equ	#40
+    147  0062 ????
+    148  0062 ????	       00 10	   BloodTime  equ	#%00010000
+    149  0062 ????	       00 08	   WalkTime   equ	#%00001000
+    150  0062 ????
+    151  0062 ????						;the borders of the screen
+    152  0062 ????	       00 10	   LeftSide   equ	#16
+    153  0062 ????	       00 80	   RightSide  equ	#128
+    154  0062 ????
+    155  0062 ????						;The timing of the current animation
+    156  0062 ????	       00	   animationTiming1 .byte.b
+    157  0063 ????	       00	   animationTiming2 .byte.b
+    158  0064 ????
+    159  0064 ????						;The number of frames in the current animation
+    160  0064 ????	       00	   numAnimationFrames1 .byte.b
+    161  0065 ????	       00	   numAnimationFrames2 .byte.b
+    162  0066 ????
+    163  0066 ????						;The animation timer
+    164  0066 ????	       00	   currentAnimationTime1 .byte.b
+    165  0067 ????	       00	   currentAnimationTime2 .byte.b
+    166  0068 ????
+    167  0068 ????						;The current animation frame
+    168  0068 ????	       00	   currentAnimationFrame1 .byte.b
+    169  0069 ????	       00	   currentAnimationFrame2 .byte.b

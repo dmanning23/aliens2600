@@ -1,0 +1,147 @@
+AlienHeight	equ 16*2
+MarineHeight equ 16*2
+
+
+;The states are:
+StandingState       equ #00
+WalkingState        equ #01
+ShootingState       equ #02
+StunnedState        equ #03
+DeathState          equ #04
+DeadState           equ #05
+
+;used in final battle:
+BeginAttackState    equ #06
+AttackingState      equ #07
+BlockingState equ #8
+KnockbackState      equ #9
+
+
+;The player's X,Y position on the screen
+;Playfield range:
+;vert range: 0 - 164
+;horiz range: 0 - 156
+;TODO: clean up playfield range magic numbers
+XPos1       .byte
+XPos2       .byte
+YPos1       .byte
+YPos2       .byte
+
+;Which direction the player is facing
+;0 = Left
+;1 = Right
+FaceRight1   .byte
+FaceRight2   .byte
+
+;Player states
+PlayerState1 .byte
+PlayerState2 .byte
+
+PlayerStateTimer1 .byte
+PlayerStateTimer2 .byte
+
+;This points at the current sprite being drawn
+spritePtr1 .word
+spritePtr2 .word
+
+;Pointer to the current color being drawn
+spriteColorPtr1 .word
+spriteColorPtr2 .word
+
+;The timing of the current animation
+animationTiming1 .byte
+animationTiming2 .byte
+
+;The number of frames in the current animation
+numAnimationFrames1 .byte
+numAnimationFrames2 .byte
+
+;The animation timer
+currentAnimationTime1 .byte
+currentAnimationTime2 .byte
+
+;The current animation frame
+currentAnimationFrame1 .byte
+currentAnimationFrame2 .byte
+
+;This variable is used to mask the controller input to map to p1 or p2
+controllerMask  .byte 
+
+;The player's input from the previous frame
+p1PrevInput byte
+p2PrevInput byte
+
+;The player's input from the current frame
+p1Input byte
+p2Input byte
+
+;The input flags are as follows:
+controllerDown		equ #%00000001
+controllerUp		equ #%00000010
+controllerLeft		equ #%00000100
+controllerRight		equ #%00001000
+controllerButton	equ #%00010000
+
+AlienHealth .byte
+
+counter .byte
+
+;scratch variable
+Temp .byte
+
+; indexes for sound effect driver    
+SFX_LEFT:       ds 1    ; stored in $B1
+SFX_RIGHT:      ds 1    ; stored in $B2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;Whether or not the game is over
+;0 game is not over
+;1 game is over
+gameOver byte
+
+;Timer used to countdown the game over state
+gameOverTimer byte
+
+;State variables
+p1State byte
+p2State byte
+
+;The character timer, used to time various state actions
+p1Timer byte
+p2Timer byte
+
+
+
+;The input flags are as follows:
+controllerDown		equ #%00000001
+controllerUp		equ #%00000010
+controllerLeft		equ #%00000100
+controllerRight		equ #%00001000
+controllerButton	equ #%00010000
+
+
+
+;These are the timers for the various states
+BeginAttackTime	equ #12 
+AttackTime      equ #15
+BlockTime       equ #18
+KnockbackTime   equ #40
+
+BloodTime equ #%00010000
+WalkTime equ #%00001000
+
+;the borders of the screen
+LeftSide equ #16
+RightSide equ #128

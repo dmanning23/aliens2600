@@ -1,0 +1,65 @@
+--- Symbol List (sorted by symbol)
+AlienHealth              0053 ????             
+AlienHeight              0020                  
+animationTiming1         0062 ????             
+animationTiming2         0063 ????             
+AttackingState           0007                  
+AttackTime               000f                  
+BeginAttackState         0006                  
+BeginAttackTime          000c                  
+BlockingState            0008                  
+BlockTime                0012                  
+BloodTime                0010                  
+controllerButton         0010                  
+controllerDown           0001                  
+controllerLeft           0004                  
+controllerMask           004e ????             
+controllerRight          0008                  
+controllerUp             0002                  
+counter                  0054 ????             
+currentAnimationFrame1   0068 ????             
+currentAnimationFrame2   0069 ????             
+currentAnimationTime1    0066 ????             
+currentAnimationTime2    0067 ????             
+DeadState                0005                  
+DeathState               0004                  
+FaceRight1               0038 ????             
+FaceRight2               0039 ????             
+gameOver                 0058 ????             
+gameOverTimer            0059 ????             
+KnockbackState           0009                  
+KnockbackTime            0028                  
+LeftSide                 0010                  
+MarineHeight             0020                  
+numAnimationFrames1      0064 ????             
+numAnimationFrames2      0065 ????             
+p1Input                  0060 ????             
+p1PrevInput              005e ????             
+p1State                  005a ????             
+p1Timer                  005c ????             
+p2Input                  0061 ????             
+p2PrevInput              005f ????             
+p2State                  005b ????             
+p2Timer                  005d ????             
+PlayerState1             003a ????             
+PlayerState2             003b ????             
+PlayerStateTimer1        003c ????             
+PlayerStateTimer2        003d ????             
+RightSide                0080                  
+SFX_LEFT                 0056 ????             
+SFX_RIGHT                0057 ????             
+ShootingState            0002                  
+spriteColorPtr1          0042 ????             
+spriteColorPtr2          0044 ????             
+spritePtr1               003e ????             
+spritePtr2               0040 ????             
+StandingState            0000                  
+StunnedState             0003                  
+Temp                     0055 ????             
+WalkingState             0001                  
+WalkTime                 0008                  
+XPos1                    0035 ????             
+XPos2                    0035 ????             
+YPos1                    0036 ????             
+YPos2                    0037 ????             
+--- End of Symbol List.

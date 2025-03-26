@@ -1,0 +1,4295 @@
+ 
+    processor 6502
+    include "vcs.h"
+    include "macro.h"
+    include "xmacro.h"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Variables segment
+
+    seg.u Variables
+    org $80
+
+    include "Variables.dasm"
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Code segment
+
+    seg Code
+    org $f000
+
+Start
+    CLEAN_START ;Macro to initialize several flags and registers, safely clears memory and TIA
+    
+    ;start a new game
+    jsr ResetGame
+
+NextFrame
+
+    VERTICAL_SYNC
+
+    ; 37 lines of underscan
+    TIMER_SETUP 36
+    
+    lda #0
+    sta RESP0
+    sta RESP1
+    sta HMP0
+    sta HMP1
+
+    inc counter
+
+    ;switch between p1 and p2
+    lda counter
+    and %00000001
+    tay
+
+    bne .setP2ControllerMask
+    lda #%11110000 ;this mask is used by the MoveJoystick routine to check p1 joystick
+    sta controllerMask
+    jmp .doneSettingControllerMask
+.setP2ControllerMask
+    lda #%00001111 ;check p2 joystick
+    sta controllerMask
+.doneSettingControllerMask
+
+    jsr CheckInput ;update the input
+    jsr CharacterUpdate ;update the players state
+
+    ;Set teh animation of the player
+    jsr SetPlayerAnimation
+    jsr UpdateAnimation
+
+    ;position the player horizontally
+    lda XPos1,y
+    ldx #0
+    jsr SetHorizPos
+    lda XPos1,y
+    adc #31
+    ldx #1
+    jsr SetHorizPos
+
+    sta WSYNC ;sync w/ scanline
+    sta HMOVE ;apply fine offsets
+
+    ; it's ok if we took an extra scanline because
+    ; the PIA timer will always count 37 lines
+    ; wait for end of underscan
+    TIMER_WAIT
+
+    ; disable VBLANK and release the TIA to generaqte some color
+    sta VBLANK
+
+;Draw the 192 scanlines
+
+;Draw ??? lines of nothing
+    ldx #45
+DontDrawTop
+    sta WSYNC
+    dex
+    bne DontDrawTop
+
+    lda #0
+    sta Temp
+
+    ldx #144
+DrawPlayers
+
+    sta WSYNC
+    dex
+
+    ;Draw Player 1
+    jsr DrawP1
+
+    sta WSYNC
+    dex
+
+    inc Temp
+
+    ;add 2 wsyncs so this matches up
+    sta WSYNC
+    dex
+    sta WSYNC
+    dex
+    sta WSYNC
+    dex
+    sta WSYNC
+    dex
+
+    bne DrawPlayers
+
+    ;done drawing players
+    lda #0
+    sta GRP0
+    sta GRP1
+    
+    ldx #23
+DontDrawBottom
+    sta WSYNC
+    dex
+    bne DontDrawBottom
+
+
+
+
+
+; Reenable VBLANK for bottom (and top of next frame)
+    lda #2
+    sta VBLANK
+
+; 30 lines of overscan
+    TIMER_SETUP 30
+    
+    jsr UpdateGameLogic
+    
+    TIMER_WAIT
+
+;total = 262 lines, go to next frame
+    jmp NextFrame
+
+
+
+DrawP1
+    lda #23
+    sbc Temp
+    tay ;local coord -> Y
+    lda (spritePtr1),y ;lookup bitmap byte
+    sta GRP0 ;store bitmap
+
+    ;lookup the color
+    lda (spriteColorPtr1),y
+    ;lda ColorFrame0,y
+    sta COLUP0 ;store color
+
+    lda (spritePtr2),y ;lookup bitmap byte
+    sta GRP1 ;store bitmap
+
+    ;lookup color
+    lda (spriteColorPtr1),y
+    sta COLUP1 ;store color
+    rts
+
+
+
+; SetHorizPos routine
+; A = X coordinate
+; X = player number (0 or 1)
+SetHorizPos subroutine
+    sta WSYNC ;start a new line
+    sec ;set carry flag
+.divideLoop
+    sbc #15 ;subtract 15
+    bcs .divideLoop ;branch until negative
+    eor #7 ;calculate fine offset
+    asl
+    asl
+    asl
+    asl
+    sta RESP0,x ;fix coarse position
+    sta HMP0,x ;set fine offset
+    rts ;return to caller
+
+
+
+ResetGame
+
+    lda #0
+    sta counter
+
+    ;Make the players double-wide
+    lda #07
+    sta NUSIZ0
+    sta NUSIZ1
+
+    ; set up initial positions
+    lda #20 ;p1 position
+    sta XPos1
+    lda #95 ;p2 position
+    sta XPos2
+
+    ;set the input up
+    lda #0
+    sta gameOver
+    sta p1State
+    sta p2State
+    sta p1Timer
+    sta p2Timer
+    sta p1PrevInput
+    sta p2PrevInput
+    sta p1Input
+    sta p2Input
+
+    ;set all the animation variables
+    sta currentAnimationTime1
+    sta currentAnimationTime2
+    sta currentAnimationFrame1
+    sta currentAnimationFrame2
+    lda #30
+    sta animationTiming1
+    sta animationTiming2
+    lda #1
+    sta numAnimationFrames1
+    sta numAnimationFrames2
+
+    lda #0
+    sta COLUBK ;reset the background color to black to start our new frame
+    sta COLUPF ;reset teh foreground color to black to start the new frame
+    sta PF0 ;set the pf0 playfield register
+    sta PF1 ;set the pf1 playfield register
+    sta PF2 ;set the pf2 playfield register
+
+    rts
+
+
+
+CheckInput subroutine
+    ;copy current input to prev
+    lda p1Input,y
+    sta p1PrevInput,y
+
+    ;blank out the current input
+    lda #0
+    sta p1Input,y
+
+.checkDown
+    ;check if the down direction is being held
+    lda #%00100010	;down?
+    and controllerMask
+    bit SWCHA
+    bne .checkUp
+
+    ;set the down flag for the current input
+    lda p1Input,y
+    ora controllerDown
+    sta p1Input,y
+
+.checkUp
+    ;check if the up direction is being held
+    lda #%00010001	;Up?
+    and controllerMask
+    bit SWCHA
+    bne .checkLeft
+
+    ;set the up flag for teh current input
+    lda p1Input,y
+    ora controllerUp
+    sta p1Input,y
+
+.checkLeft
+    ;check if the left direction is being held
+    lda #%01000100	;left?
+    and controllerMask
+    bit SWCHA
+    bne .checkRight
+
+    ;set the "left" flag for teh current input
+    lda p1Input,y
+    ora controllerLeft
+    sta p1Input,y
+
+.checkRight
+    ;check if the left direction is being held
+    lda #%10001000	;right?
+    and controllerMask
+    bit SWCHA
+    bne .checkButton
+
+    ;set the "right" flag for teh current input
+    lda p1Input,y
+    ora controllerRight
+    sta p1Input,y
+
+.checkButton
+    ;are we checking p1 or p2? There is a different register depending on which one.
+    tya
+    cmp #01
+    beq .checkP2Button
+
+.checkP1Button
+    lda #%10000000 ;Check if the button is pressed on the first controller
+    bit INPT4
+    beq .setButtonFlag
+    jmp .doneCheckingInput
+
+.checkP2Button
+    lda #%10000000 ;Check if the button is pressed on the second controller
+    bit INPT5
+    beq .setButtonFlag
+    jmp .doneCheckingInput
+
+.setButtonFlag
+    ;set the "button" flag for teh current input
+    lda p1Input,y
+    ora controllerButton
+    sta p1Input,y
+
+.doneCheckingInput
+    rts
+
+
+
+MovePlayer
+.checkMoveLeft
+    ;load the player's position to the X register
+    ldx XPos1,y
+
+    ;load the player's input to the accumulator
+    lda p1Input,y
+
+    ;Check if the left direction is being held down
+    bit controllerLeft
+    beq .checkMoveRight
+
+    ;Dont walk off the left side of teh screen
+    cpx LeftSide
+    bcc .checkMoveRight
+
+    ;Move left
+    dex
+
+    ;Set the player state to walking
+    jmp .changePlayerToWalking
+
+.checkMoveRight
+    ;Check if the "right" direction is being held down
+    bit controllerRight
+    beq .changePlayerToStanding
+
+    ;Dont walk off the right side of teh screen
+    cpx #128
+    bcs .changePlayerToStanding
+
+    ;move right!
+    inx 
+
+.changePlayerToWalking
+    ;is the player standing?
+    lda p1State,y
+    cmp StandingState
+    bne .doneMovingPlayer
+
+    ;Set the player's state to walking
+    lda WalkingState
+    sta p1State,y
+
+    jsr RestartAnimation
+
+    ;restart the timer
+    lda $FF
+    sta p1Timer,y
+
+    jmp .doneMovingPlayer
+
+.changePlayerToStanding
+    lda StandingState
+    sta p1State,y
+
+.doneMovingPlayer
+    ;set the player's new position
+    stx XPos1,y
+    rts
+
+
+
+CharacterUpdate subroutine
+
+    jsr SetPlayerColor
+
+    ;Decrement the timer on every character update
+    ldx p1Timer,y
+    dex
+    stx p1Timer,y
+
+    ;check if the game is over
+    lda gameOver
+    cmp #01
+    bne .checkStanding
+
+    ;check if the player is dead
+    lda p1State,y
+    cmp DeadState
+    bne .jumpToDoneUpdatingPlayerState
+
+    ;Toggle the color to the blood if required
+    ;AND teh game over timer with 16, if it is 0, set the player to neutral color
+    lda gameOverTimer
+    bit BloodTime
+    bne .toggleBloodyColor
+
+    jsr .toggleBloodyColor1
+    jmp .doneUpdatingPlayerState
+
+.toggleBloodyColor
+    ;which player?
+    tya
+    cmp #00
+    beq .toggleP1Bloody
+
+    ldx #02
+    jsr SetBloodyColor
+    jmp .doneUpdatingPlayerState
+
+.toggleP1Bloody
+    ldx #00
+    jsr SetBloodyColor
+    jmp .doneUpdatingPlayerState
+
+.toggleBloodyColor1
+    ;which player?
+    tya
+    cmp #00
+    beq .toggleP1Bloody1
+
+    ldx #02
+    jsr SetBloodyColor1
+    jmp .doneUpdatingPlayerState
+
+.toggleP1Bloody1
+    ldx #00
+    jsr SetBloodyColor1
+    jmp .doneUpdatingPlayerState
+
+.jumpToDoneUpdatingPlayerState
+    jmp .doneUpdatingPlayerState
+
+.checkStanding  
+    ;Check if the player is standing
+    lda p1State,y
+    cmp StandingState
+    beq .checkStandingWalkingInput
+
+    ;Check if the player is walking
+    cmp WalkingState
+    bne .checkBeginAttacking
+
+.checkStandingWalkingInput
+    ;check for the button press
+    lda p1Input,y ;is the button currently held?
+    bit controllerButton
+    beq .doneCheckingButtonPress
+
+    ;The down direction is currently being held, but is it a new input?
+    eor p1PrevInput,y
+    bit controllerButton
+    beq .doneCheckingButtonPress
+
+    ;change the state to "begin attacking"
+    lda BeginAttackState
+    sta p1State,y
+
+    jsr RestartAnimation
+
+    ;restart the timer
+    ;lda BeginAttackTime ;for some reason this is fubar for player 2
+    lda #12 
+    sta p1Timer,y
+
+    jmp .doneUpdatingPlayerState
+
+.doneCheckingButtonPress
+
+    ;check for down press
+    lda p1Input,y ;is the down direction currently held?
+    bit controllerDown
+    beq .doneCheckingDownPress
+
+    ;The down direction is currently being held, but is it a new input?
+    eor p1PrevInput,y
+    bit controllerDown
+    beq .doneCheckingDownPress
+
+    ;change the state to blocking
+    lda BlockingState
+    sta p1State,y
+
+    jsr RestartAnimation
+
+    ;restart the timer
+    lda BlockTime
+    sta p1Timer,y
+
+    jmp .doneUpdatingPlayerState
+
+.doneCheckingDownPress
+
+    ;Move the player depending on the current input
+    jsr MovePlayer
+
+    jmp .doneUpdatingPlayerState
+
+.checkBeginAttacking
+
+    lda p1State,y
+    cmp BeginAttackState
+    bne .checkAttacking
+
+    ;check if the "up" direction was pressed
+    lda p1Input,y ;is the up direction currently held?
+    bit controllerUp
+    beq .doneCheckingUpPress
+
+    ;The up direction is currently being held, but is it a new input?
+    eor p1PrevInput,y
+    bit controllerUp
+    beq .doneCheckingUpPress
+
+    ;The player cancelled, change the state to standing
+    lda StandingState
+    sta p1State,y
+
+    jmp .doneUpdatingPlayerState
+
+.doneCheckingUpPress
+
+    ;check if the timer is done
+    lda p1Timer,y
+    cmp #00
+    bne .doneUpdatingPlayerState
+
+    ;Change state to attacking
+    lda AttackingState
+    sta p1State,y
+
+    jsr RestartAnimation
+
+    ;start the timer
+    lda AttackTime
+    sta p1Timer,y
+
+    jmp .doneUpdatingPlayerState
+
+.checkAttacking
+
+    lda p1State,y
+    cmp AttackingState
+    bne .checkBlocking
+
+    ;check if the timer is done
+    lda p1Timer,y
+    cmp #00
+    bne .doneUpdatingPlayerState
+
+    ;Change to the standing state
+    lda StandingState
+    sta p1State,y
+
+    jmp .doneUpdatingPlayerState
+
+.checkBlocking
+
+    lda p1State,y
+    cmp BlockingState
+    bne .checkKnockback
+
+    ;check if the timer is done
+    lda p1Timer,y
+    cmp #00
+    bne .doneUpdatingPlayerState
+
+    ;Change to the standing state
+    lda StandingState
+    sta p1State,y
+
+    jmp .doneUpdatingPlayerState
+
+.checkKnockback
+
+    lda p1State,y
+    cmp KnockbackState
+    bne .doneUpdatingPlayerState
+
+    ;Scoot the player backwards while they are in knockback state
+    ldx XPos1,y ;load the player's position so we can check to not kncok them off screen
+    tya
+    cmp #00 ;check which player is being knocked back
+    bne .scootBackPlayer2
+
+    ;scoot back player 1
+    cpx LeftSide
+    bcc .doneScootingBack
+
+    ;Move left
+    dex
+    stx XPos1,y
+    jmp .doneScootingBack
+
+.scootBackPlayer2
+
+    ;scoot back player 2
+    cpx #128
+    bcs .doneScootingBack
+
+    ;move right!
+    inx 
+    stx XPos1,y
+
+.doneScootingBack
+    ;check if the timer is done
+    lda p1Timer,y
+    cmp #00
+    bne .doneUpdatingPlayerState
+
+    ;Change to the standing state
+    lda StandingState
+    sta p1State,y
+
+    jmp .doneUpdatingPlayerState
+
+.doneUpdatingPlayerState
+    rts
+
+
+
+RestartAnimation
+    lda #0
+    sta currentAnimationTime1,y
+    sta currentAnimationFrame1,y
+    rts
+
+
+
+SetPlayerAnimation subroutine
+    tya
+    beq .setLoaderAnimation
+
+.setAlienQueenAnimation
+    jsr SetAlienQueenAnimation
+    jmp .doneSettingPlayerAnimation
+
+.setLoaderAnimation
+    jsr SetLoaderAnimation
+
+.doneSettingPlayerAnimation
+    rts
+
+
+
+SetLoaderAnimation subroutine
+.checkStandingAnimation
+    lda p1State,y
+    cmp StandingState
+    beq .setStandingAnimation
+
+    cmp WalkingState
+    beq .setWalkingAnimation
+
+    cmp BeginAttackState
+    beq .setBeginAttackingAnimation
+
+    cmp AttackingState
+    beq .setAttackAnimation
+
+    cmp BlockingState
+    beq .setBlockAnimation
+
+    ;The last possible state
+    jmp .setKnockbackAnimation
+
+.setStandingAnimation
+    ;set the standing animation
+    ldx #0
+    lda #<LoaderStand11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderStand11
+    sta spritePtr1,x
+
+    lda LoaderStandSpeed
+    sta animationTiming1,y
+    lda LoaderStandFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setWalkingAnimation
+
+    ldx #0
+    lda #<LoaderWalk11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderWalk11
+    sta spritePtr1,x
+
+    lda LoaderWalkSpeed
+    sta animationTiming1,y
+    lda LoaderWalkFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBeginAttackingAnimation
+
+    ldx #0
+    lda #<LoaderBeginAttack11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderBeginAttack11
+    sta spritePtr1,x
+
+    lda LoaderBeginAttackSpeed
+    sta animationTiming1,y
+    lda LoaderBeginAttackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setAttackAnimation
+
+    ldx #0
+    lda #<LoaderAttack11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderAttack11
+    sta spritePtr1,x
+
+    lda LoaderAttackSpeed
+    sta animationTiming1,y
+    lda LoaderAttackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBlockAnimation
+
+    ldx #0
+    lda #<LoaderBlock11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderBlock11
+    sta spritePtr1,x
+
+    lda LoaderBlockSpeed
+    sta animationTiming1,y
+    lda LoaderBlockFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setKnockbackAnimation
+
+    ;TODO: knockback animation
+    ldx #0
+    lda #<LoaderWalk11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderWalk11
+    sta spritePtr1,x
+
+    lda LoaderWalkSpeed
+    sta animationTiming1,y
+    lda LoaderWalkFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.doneSettingAnimation
+    lda animationTiming1,y
+    lsr
+    sta animationTiming1,y
+    rts
+
+
+
+
+SetAlienQueenAnimation subroutine
+.checkStandingAnimation
+    lda p1State,y
+    cmp StandingState
+    beq .setStandingAnimation
+
+    cmp WalkingState
+    beq .setWalkingAnimation
+
+    cmp BeginAttackState
+    beq .setBeginAttackingAnimation
+
+    cmp AttackingState
+    beq .setAttackAnimation
+
+    cmp BlockingState
+    beq .setBlockAnimation
+
+    ;The last possible state
+    jmp .setKnockbackAnimation
+
+.setStandingAnimation
+    ;set the standing animation
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setWalkingAnimation
+
+    ldx #0
+    lda #<AlienQueenWalk11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenWalk11
+    sta spritePtr1,x
+
+    lda AlienQueenWalkSpeed
+    sta animationTiming1,y
+    lda AlienQueenWalkFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBeginAttackingAnimation
+
+    ldx #0
+    lda #<AlienQueenBeginAttack11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenBeginAttack11
+    sta spritePtr1,x
+
+    lda AlienQueenBeginAttackSpeed
+    sta animationTiming1,y
+    lda AlienQueenBeginAttackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setAttackAnimation
+
+    ldx #0
+    lda #<AlienQueenAttack11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenAttack11
+    sta spritePtr1,x
+
+    lda AlienQueenAttackSpeed
+    sta animationTiming1,y
+    lda AlienQueenAttackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBlockAnimation
+
+    ;TODO
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setKnockbackAnimation
+
+    ;TODO
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.doneSettingAnimation
+    lda animationTiming1,y
+    lsr
+    sta animationTiming1,y
+    rts
+
+
+
+UpdateAnimation subroutine
+
+    ;don't update the animation if the number of frames is less than 1
+    lda numAnimationFrames1,y     ; Load number of frames
+    cmp #2                     ; Compare with 2
+    bcs .continue               ; Branch if num AnimationFrames >= 2
+    jmp .doneUpdatingAnimation ; Skip if num AnimationFrames <= 1
+
+.continue:
+
+    ;Update the animation time 
+
+    ;Increment the current animation time
+    lda currentAnimationTime1,y
+    clc
+    adc #1
+    sta currentAnimationTime1,y
+
+    ;Check if it is time to increment the frame
+    lda currentAnimationTime1,y ; Load current AnimationTime into accumulator
+    cmp animationTiming1,y ; Compare with animationTiming
+    bcc .doneUpdatingAnimationTime ; Branch if current AnimationTime < animationTiming
+
+    ; If we get here, current AnimationTime >= animationTiming
+    lda #0                     ; Load 0 into accumulator
+    sta currentAnimationTime1,y   ; Reset current AnimationTime to 0
+
+    lda currentAnimationFrame1,y
+    clc
+    adc #1
+    sta currentAnimationFrame1,y  ; Increment the animation frame
+
+.doneUpdatingAnimationTime
+
+    ;Update the animation frame
+
+    lda currentAnimationFrame1,y ; Load current frame into accumulator
+    cmp numAnimationFrames1,y ; Compare with max frames
+    ;beq .doneUpdatingAnimationFrame ; If equal, we're good
+    bcc .doneUpdatingAnimationFrame ; Branch if current AnimationFrame < num AnimationFrames
+
+    ; If we get here, current AnimationFrame >= num AnimationFrames
+    lda #0 ; Load 0 into accumulator
+    sta currentAnimationFrame1,y ; Reset frame back to 0
+
+.doneUpdatingAnimationFrame:
+
+    ;Move the sprite pointer to point to the correct animation frame
+
+    lda currentAnimationFrame1,y  ; Check if frame is 0
+    beq .doneUpdatingSpritePointer                  ; If 0, no adding needed
+
+    ldx currentAnimationFrame1,y ; Use X as our frameCounter
+    
+.addLoop:
+    clc                       ; Clear carry before addition
+    lda spritePtr1           ; Add 52 to pointer
+    adc #48
+    sta spritePtr1
+    lda spritePtr1+1         ; Add carry to high byte
+    adc #0
+    sta spritePtr1+1
+    
+    dex                      ; Decrement frameCounter
+    bne .addLoop             ; Keep going if we're not done
+
+.doneUpdatingSpritePointer
+
+.doneUpdatingAnimation
+
+    ;set up rest of the player sprites
+
+    ;Set the second player sprite
+    ldx #0
+    lda spritePtr1,x        ; Load the low byte value
+    clc                     ; Clear carry before addition
+    adc #24                 ; Add 13 to the value
+    sta spritePtr2,x
+    inx
+    lda spritePtr1,x        ; Load the high byte value
+    adc #0                  ; Add carry if it occurred from low byte addition
+    sta spritePtr2,x
+
+    rts
+
+
+
+SetPlayerColor subroutine
+
+    ;Set the player colors to their neutral color
+    tya
+    beq .setP1Color
+
+    jmp .setP2Color
+
+.setP1Color
+
+    ldx #00
+    lda #<ColorFramePlayer0
+    sta spriteColorPtr1,x
+    inx
+    lda #>ColorFramePlayer0
+    sta spriteColorPtr1,x
+
+    jmp .doneSettingPlayerColor
+
+.setP2Color
+
+    ldx #00
+    lda #<ColorFramePlayer1
+    sta spriteColorPtr1,x
+    inx
+    lda #>ColorFramePlayer1
+    sta spriteColorPtr1,x
+
+.doneSettingPlayerColor
+    rts
+
+
+SetBloodyColor
+    ldx #00
+    lda #<ColorBlood
+    sta spriteColorPtr1,x
+    inx
+    lda #>ColorBlood
+    sta spriteColorPtr1,x
+    rts
+
+
+
+SetBloodyColor1
+    ldx #00
+    lda #<ColorBlood1
+    sta spriteColorPtr1,x
+    inx
+    lda #>ColorBlood1
+    sta spriteColorPtr1,x
+    rts
+
+
+
+UpdateGameLogic subroutine
+    ;check if the game is over
+    lda gameOver
+    cmp #01
+    beq .gameOverState
+
+    ;check how close the players are
+    lda XPos1     ; Load the value of XPos1 into the accumulator
+    cmp XPos2     ; Compare XPos1 with XPos2
+    bcc .XPos2Greater ; If XPos1 is less than XPos2, branch to XPos2Greater
+
+    jmp .XPos1GreaterOrEqual
+    
+.gameOverState
+    ;The game is over!
+
+    ;Decrement the game over timer
+    ldx gameOverTimer
+    dex
+    stx gameOverTimer
+    txa
+    cmp #0
+    bne .jumpToDoneUpdating
+
+    ;the game is over, we've wantched the loser flash red, restart the game
+    jsr ResetGame
+
+.jumpToDoneUpdating
+    jmp .doneUpdatingGameLogic
+
+.XPos1GreaterOrEqual:
+    lda XPos1
+    sbc XPos2     ; Subtract XPos2 from the accumulator
+    cmp #17       ; Compare the result with 64
+    bcc .closeEnough  ; If result is less than 64, branch to LessThan
+    jmp .doneUpdatingGameLogic      ; Jump to Done if result is greater or equal to 64
+
+.XPos2Greater:
+    lda XPos2
+    sbc XPos1
+    cmp #17
+    bcc .closeEnough
+    jmp .doneUpdatingGameLogic
+
+.closeEnough
+    ;is p1 attacking
+    lda p1State
+    cmp AttackingState
+    bne .checkPlayer2GameLogic
+
+    ;is p2 blocking
+    lda p2State
+    cmp BlockingState
+    bne .checkP2Attacking
+
+    ;Player 1 has been bounced back
+    ldy 0
+    jmp .bouncePlayer
+
+.checkP2Attacking
+    ;is p2 attacking or begin attacking
+    cmp AttackingState
+    bne .checkP2BeginAttacking
+
+    ;Both players are attacking, bounce them both
+    jmp .setDoubleBounce
+
+.checkP2BeginAttacking
+    cmp BeginAttackState
+    bne .killP2
+
+    ;Both players are attacking, bounce them both
+    jmp .setDoubleBounce
+
+.killP2
+    ;p2 has been killed
+    ldy 1
+    jmp .killPlayer
+
+.checkPlayer2GameLogic
+    ;is p2 attacking
+    lda p2State
+    cmp AttackingState
+    bne .doneUpdatingGameLogic
+
+    ;is p1 blocking
+    lda p1State
+    cmp BlockingState
+    bne .checkP1BeginAttacking
+
+    ;Player 2 has been bounced back
+    ldy 1
+    jmp .bouncePlayer
+
+.checkP1BeginAttacking
+    ;is p1 begin attacking
+    cmp BeginAttackState
+    bne .killP1
+
+    ;Both players are attacking, bounce them both
+    jmp .setDoubleBounce
+
+.killP1
+    ;p1 has been killed
+    ldy 0
+    jmp .killPlayer
+
+.killPlayer
+    ;set teh game to over
+    lda #01
+    sta gameOver 
+
+    ;start the game over timer
+    lda #$FF
+    sta gameOverTimer
+
+    ;set the player to dead
+    lda DeadState
+    sta p1State,y
+
+    ;set the players timer
+    lda #01
+    sta p1Timer,y
+    jmp .doneUpdatingGameLogic
+
+.bouncePlayer
+    ;Set the player to being knocked back
+    lda KnockbackState
+    sta p1State,y
+
+    jsr RestartAnimation
+
+    ;Set the player's timer
+    lda KnockbackTime
+    sta p1Timer,y
+
+    jmp .doneUpdatingGameLogic
+
+.setDoubleBounce
+    ;The game is in a state where both players are getting bounced
+    ldy 0
+    jsr .bouncePlayer
+
+    ldy 1
+    jsr .bouncePlayer
+
+.doneUpdatingGameLogic
+    rts
+
+
+
+;---Color Data from PlayerPal 2600---
+
+ColorFramePlayer0
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+
+ColorFramePlayer1
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+
+ColorBlood
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+
+ColorBlood1
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+
+
+;Loader Sprite Data (Height: 24, Mode: doubleWidth)
+
+;Stand Animation Data:
+LoaderStand11
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00110000 ; Row 5 (left)
+  .byte %00111000 ; Row 6 (left)
+  .byte %00011000 ; Row 7 (left)
+  .byte %00001100 ; Row 8 (left)
+  .byte %00000101 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00011101 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111110 ; Row 15 (left)
+  .byte %00111110 ; Row 16 (left)
+  .byte %00011100 ; Row 17 (left)
+  .byte %00011110 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00011111 ; Row 20 (left)
+  .byte %00011110 ; Row 21 (left)
+  .byte %00011111 ; Row 22 (left)
+  .byte %00001100 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderStand12
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %10000000 ; Row 9 (right)
+  .byte %00010000 ; Row 10 (right)
+  .byte %00101100 ; Row 11 (right)
+  .byte %11100010 ; Row 12 (right)
+  .byte %11000000 ; Row 13 (right)
+  .byte %01100000 ; Row 14 (right)
+  .byte %00100000 ; Row 15 (right)
+  .byte %00110000 ; Row 16 (right)
+  .byte %00001100 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderStand21
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00110000 ; Row 5 (left)
+  .byte %00111000 ; Row 6 (left)
+  .byte %00011000 ; Row 7 (left)
+  .byte %00001100 ; Row 8 (left)
+  .byte %00000101 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00011100 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111111 ; Row 15 (left)
+  .byte %00111110 ; Row 16 (left)
+  .byte %00011100 ; Row 17 (left)
+  .byte %00011110 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00011111 ; Row 20 (left)
+  .byte %00011100 ; Row 21 (left)
+  .byte %00011111 ; Row 22 (left)
+  .byte %00001100 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderStand22
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %10000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00110000 ; Row 11 (right)
+  .byte %01101100 ; Row 12 (right)
+  .byte %11000010 ; Row 13 (right)
+  .byte %11000000 ; Row 14 (right)
+  .byte %01000000 ; Row 15 (right)
+  .byte %01100000 ; Row 16 (right)
+  .byte %00110000 ; Row 17 (right)
+  .byte %00001100 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderStand31
+  .byte %00000000 ; Row 1 (left)
+  .byte %00110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00111000 ; Row 5 (left)
+  .byte %00011100 ; Row 6 (left)
+  .byte %00001100 ; Row 7 (left)
+  .byte %00000100 ; Row 8 (left)
+  .byte %00000101 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00011100 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111111 ; Row 15 (left)
+  .byte %00111110 ; Row 16 (left)
+  .byte %00011100 ; Row 17 (left)
+  .byte %00011110 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00011111 ; Row 20 (left)
+  .byte %00010011 ; Row 21 (left)
+  .byte %00011111 ; Row 22 (left)
+  .byte %00001100 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderStand32
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %10000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00110000 ; Row 11 (right)
+  .byte %01101100 ; Row 12 (right)
+  .byte %11000010 ; Row 13 (right)
+  .byte %11000000 ; Row 14 (right)
+  .byte %01000000 ; Row 15 (right)
+  .byte %01100000 ; Row 16 (right)
+  .byte %00110000 ; Row 17 (right)
+  .byte %00001100 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderStand41
+  .byte %00000000 ; Row 1 (left)
+  .byte %00110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00111000 ; Row 5 (left)
+  .byte %00011100 ; Row 6 (left)
+  .byte %00001100 ; Row 7 (left)
+  .byte %00000100 ; Row 8 (left)
+  .byte %00000101 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00011101 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111110 ; Row 15 (left)
+  .byte %00111110 ; Row 16 (left)
+  .byte %00011100 ; Row 17 (left)
+  .byte %00011110 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00011111 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00011111 ; Row 22 (left)
+  .byte %00001100 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderStand42
+  .byte %00000000 ; Row 1 (right)
+  .byte %00110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %01100000 ; Row 4 (right)
+  .byte %01000000 ; Row 5 (right)
+  .byte %01100000 ; Row 6 (right)
+  .byte %01100000 ; Row 7 (right)
+  .byte %11100000 ; Row 8 (right)
+  .byte %11000000 ; Row 9 (right)
+  .byte %00010000 ; Row 10 (right)
+  .byte %00101100 ; Row 11 (right)
+  .byte %11100010 ; Row 12 (right)
+  .byte %11000000 ; Row 13 (right)
+  .byte %01100000 ; Row 14 (right)
+  .byte %00100000 ; Row 15 (right)
+  .byte %00110000 ; Row 16 (right)
+  .byte %00001100 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderStand51
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00110000 ; Row 5 (left)
+  .byte %00111000 ; Row 6 (left)
+  .byte %00011000 ; Row 7 (left)
+  .byte %00001100 ; Row 8 (left)
+  .byte %00000101 ; Row 9 (left)
+  .byte %00000110 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011101 ; Row 12 (left)
+  .byte %00011111 ; Row 13 (left)
+  .byte %00111110 ; Row 14 (left)
+  .byte %00111110 ; Row 15 (left)
+  .byte %00111100 ; Row 16 (left)
+  .byte %00011100 ; Row 17 (left)
+  .byte %00011110 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00011111 ; Row 20 (left)
+  .byte %00001111 ; Row 21 (left)
+  .byte %00011111 ; Row 22 (left)
+  .byte %00001100 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderStand52
+  .byte %00000000 ; Row 1 (right)
+  .byte %00110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %01100000 ; Row 4 (right)
+  .byte %01000000 ; Row 5 (right)
+  .byte %01100000 ; Row 6 (right)
+  .byte %01100000 ; Row 7 (right)
+  .byte %11100000 ; Row 8 (right)
+  .byte %11010000 ; Row 9 (right)
+  .byte %00111100 ; Row 10 (right)
+  .byte %01000010 ; Row 11 (right)
+  .byte %11000000 ; Row 12 (right)
+  .byte %11000000 ; Row 13 (right)
+  .byte %01100000 ; Row 14 (right)
+  .byte %00111000 ; Row 15 (right)
+  .byte %00001100 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderStandSpeed:
+  .byte 14 ; Animation speed
+
+LoaderStandFrames:
+  .byte 5 ; Number of frames
+
+;Block Animation Data:
+LoaderBlock11
+  .byte %00000000 ; Row 1 (left)
+  .byte %11100000 ; Row 2 (left)
+  .byte %11100000 ; Row 3 (left)
+  .byte %11000000 ; Row 4 (left)
+  .byte %01110000 ; Row 5 (left)
+  .byte %00011000 ; Row 6 (left)
+  .byte %00001000 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00011111 ; Row 9 (left)
+  .byte %00011000 ; Row 10 (left)
+  .byte %00111000 ; Row 11 (left)
+  .byte %00111000 ; Row 12 (left)
+  .byte %00111001 ; Row 13 (left)
+  .byte %01111100 ; Row 14 (left)
+  .byte %01111111 ; Row 15 (left)
+  .byte %01111011 ; Row 16 (left)
+  .byte %00111100 ; Row 17 (left)
+  .byte %00111110 ; Row 18 (left)
+  .byte %00111110 ; Row 19 (left)
+  .byte %00111000 ; Row 20 (left)
+  .byte %00111110 ; Row 21 (left)
+  .byte %00011000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBlock12
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %00110000 ; Row 9 (right)
+  .byte %01000000 ; Row 10 (right)
+  .byte %10000000 ; Row 11 (right)
+  .byte %10000000 ; Row 12 (right)
+  .byte %00000000 ; Row 13 (right)
+  .byte %10000000 ; Row 14 (right)
+  .byte %10000000 ; Row 15 (right)
+  .byte %11000000 ; Row 16 (right)
+  .byte %01000010 ; Row 17 (right)
+  .byte %00100100 ; Row 18 (right)
+  .byte %00111000 ; Row 19 (right)
+  .byte %00010000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBlock21
+  .byte %00000000 ; Row 1 (left)
+  .byte %11100000 ; Row 2 (left)
+  .byte %11100000 ; Row 3 (left)
+  .byte %11000000 ; Row 4 (left)
+  .byte %01110000 ; Row 5 (left)
+  .byte %00011000 ; Row 6 (left)
+  .byte %00001000 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00011111 ; Row 9 (left)
+  .byte %00011000 ; Row 10 (left)
+  .byte %00111000 ; Row 11 (left)
+  .byte %00111000 ; Row 12 (left)
+  .byte %00111001 ; Row 13 (left)
+  .byte %01111100 ; Row 14 (left)
+  .byte %01111111 ; Row 15 (left)
+  .byte %01111011 ; Row 16 (left)
+  .byte %00111100 ; Row 17 (left)
+  .byte %00111110 ; Row 18 (left)
+  .byte %00111110 ; Row 19 (left)
+  .byte %00111000 ; Row 20 (left)
+  .byte %00111110 ; Row 21 (left)
+  .byte %00011000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBlock22
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %00011000 ; Row 9 (right)
+  .byte %00110000 ; Row 10 (right)
+  .byte %01000000 ; Row 11 (right)
+  .byte %11000000 ; Row 12 (right)
+  .byte %00000000 ; Row 13 (right)
+  .byte %10000000 ; Row 14 (right)
+  .byte %10000010 ; Row 15 (right)
+  .byte %11000110 ; Row 16 (right)
+  .byte %01001100 ; Row 17 (right)
+  .byte %00111000 ; Row 18 (right)
+  .byte %00110000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBlock31
+  .byte %00000000 ; Row 1 (left)
+  .byte %11100000 ; Row 2 (left)
+  .byte %11100000 ; Row 3 (left)
+  .byte %11000000 ; Row 4 (left)
+  .byte %01110000 ; Row 5 (left)
+  .byte %00011000 ; Row 6 (left)
+  .byte %00001000 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00011111 ; Row 9 (left)
+  .byte %00011000 ; Row 10 (left)
+  .byte %00111000 ; Row 11 (left)
+  .byte %00111000 ; Row 12 (left)
+  .byte %00111000 ; Row 13 (left)
+  .byte %01111100 ; Row 14 (left)
+  .byte %01111111 ; Row 15 (left)
+  .byte %01111011 ; Row 16 (left)
+  .byte %00111100 ; Row 17 (left)
+  .byte %00111110 ; Row 18 (left)
+  .byte %00111110 ; Row 19 (left)
+  .byte %00111000 ; Row 20 (left)
+  .byte %00111110 ; Row 21 (left)
+  .byte %00011000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBlock32
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %00001000 ; Row 9 (right)
+  .byte %00011100 ; Row 10 (right)
+  .byte %00110000 ; Row 11 (right)
+  .byte %01000000 ; Row 12 (right)
+  .byte %10000000 ; Row 13 (right)
+  .byte %10000010 ; Row 14 (right)
+  .byte %10000110 ; Row 15 (right)
+  .byte %11001100 ; Row 16 (right)
+  .byte %01011000 ; Row 17 (right)
+  .byte %00110000 ; Row 18 (right)
+  .byte %00100000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBlock41
+  .byte %00000000 ; Row 1 (left)
+  .byte %11100000 ; Row 2 (left)
+  .byte %11100000 ; Row 3 (left)
+  .byte %11000000 ; Row 4 (left)
+  .byte %01110000 ; Row 5 (left)
+  .byte %00011000 ; Row 6 (left)
+  .byte %00001000 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00011111 ; Row 9 (left)
+  .byte %00011000 ; Row 10 (left)
+  .byte %00111000 ; Row 11 (left)
+  .byte %00111000 ; Row 12 (left)
+  .byte %00111000 ; Row 13 (left)
+  .byte %01111100 ; Row 14 (left)
+  .byte %01111111 ; Row 15 (left)
+  .byte %01111011 ; Row 16 (left)
+  .byte %00111100 ; Row 17 (left)
+  .byte %00111110 ; Row 18 (left)
+  .byte %00111110 ; Row 19 (left)
+  .byte %00111000 ; Row 20 (left)
+  .byte %00111110 ; Row 21 (left)
+  .byte %00011000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBlock42
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00001100 ; Row 10 (right)
+  .byte %00011000 ; Row 11 (right)
+  .byte %01110000 ; Row 12 (right)
+  .byte %01000010 ; Row 13 (right)
+  .byte %11000110 ; Row 14 (right)
+  .byte %10001100 ; Row 15 (right)
+  .byte %11011000 ; Row 16 (right)
+  .byte %01110000 ; Row 17 (right)
+  .byte %00100000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBlock51
+  .byte %00000000 ; Row 1 (left)
+  .byte %11100000 ; Row 2 (left)
+  .byte %11100000 ; Row 3 (left)
+  .byte %11000000 ; Row 4 (left)
+  .byte %01110000 ; Row 5 (left)
+  .byte %00011000 ; Row 6 (left)
+  .byte %00001000 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00011111 ; Row 9 (left)
+  .byte %00011000 ; Row 10 (left)
+  .byte %00111000 ; Row 11 (left)
+  .byte %00111000 ; Row 12 (left)
+  .byte %00111000 ; Row 13 (left)
+  .byte %01111100 ; Row 14 (left)
+  .byte %01111111 ; Row 15 (left)
+  .byte %01111011 ; Row 16 (left)
+  .byte %00111100 ; Row 17 (left)
+  .byte %00111110 ; Row 18 (left)
+  .byte %00111110 ; Row 19 (left)
+  .byte %00111000 ; Row 20 (left)
+  .byte %00111110 ; Row 21 (left)
+  .byte %00011000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBlock52
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00001110 ; Row 11 (right)
+  .byte %00011110 ; Row 12 (right)
+  .byte %00111110 ; Row 13 (right)
+  .byte %11111100 ; Row 14 (right)
+  .byte %11111000 ; Row 15 (right)
+  .byte %11110000 ; Row 16 (right)
+  .byte %01100000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBlock61
+  .byte %00000000 ; Row 1 (left)
+  .byte %11100000 ; Row 2 (left)
+  .byte %11100000 ; Row 3 (left)
+  .byte %11000000 ; Row 4 (left)
+  .byte %01110000 ; Row 5 (left)
+  .byte %00011000 ; Row 6 (left)
+  .byte %00001000 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00011111 ; Row 9 (left)
+  .byte %00011000 ; Row 10 (left)
+  .byte %00111000 ; Row 11 (left)
+  .byte %00111000 ; Row 12 (left)
+  .byte %00111000 ; Row 13 (left)
+  .byte %01111100 ; Row 14 (left)
+  .byte %01111111 ; Row 15 (left)
+  .byte %01111011 ; Row 16 (left)
+  .byte %00111100 ; Row 17 (left)
+  .byte %00111110 ; Row 18 (left)
+  .byte %00111110 ; Row 19 (left)
+  .byte %00111000 ; Row 20 (left)
+  .byte %00111110 ; Row 21 (left)
+  .byte %00011000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBlock62
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00001110 ; Row 11 (right)
+  .byte %00011110 ; Row 12 (right)
+  .byte %00111110 ; Row 13 (right)
+  .byte %11111100 ; Row 14 (right)
+  .byte %11111000 ; Row 15 (right)
+  .byte %11110000 ; Row 16 (right)
+  .byte %01100000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBlockSpeed:
+  .byte 6 ; Animation speed
+
+LoaderBlockFrames:
+  .byte 6 ; Number of frames
+
+;BeginAttack Animation Data:
+LoaderBeginAttack11
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00110000 ; Row 5 (left)
+  .byte %00111000 ; Row 6 (left)
+  .byte %00011000 ; Row 7 (left)
+  .byte %00001100 ; Row 8 (left)
+  .byte %00000101 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00011101 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111111 ; Row 15 (left)
+  .byte %00111110 ; Row 16 (left)
+  .byte %00011100 ; Row 17 (left)
+  .byte %00011110 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00011111 ; Row 20 (left)
+  .byte %00011100 ; Row 21 (left)
+  .byte %00011111 ; Row 22 (left)
+  .byte %00001100 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBeginAttack12
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %10000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %01111100 ; Row 12 (right)
+  .byte %11000010 ; Row 13 (right)
+  .byte %11000000 ; Row 14 (right)
+  .byte %01000010 ; Row 15 (right)
+  .byte %01111100 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBeginAttack21
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00110000 ; Row 5 (left)
+  .byte %00111000 ; Row 6 (left)
+  .byte %00011000 ; Row 7 (left)
+  .byte %00001100 ; Row 8 (left)
+  .byte %00000101 ; Row 9 (left)
+  .byte %00001111 ; Row 10 (left)
+  .byte %00011100 ; Row 11 (left)
+  .byte %00111000 ; Row 12 (left)
+  .byte %00111011 ; Row 13 (left)
+  .byte %01111011 ; Row 14 (left)
+  .byte %01111110 ; Row 15 (left)
+  .byte %01111110 ; Row 16 (left)
+  .byte %00011000 ; Row 17 (left)
+  .byte %00111100 ; Row 18 (left)
+  .byte %00111110 ; Row 19 (left)
+  .byte %00111110 ; Row 20 (left)
+  .byte %00111000 ; Row 21 (left)
+  .byte %00111110 ; Row 22 (left)
+  .byte %00011100 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBeginAttack22
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %10000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %01111000 ; Row 11 (right)
+  .byte %10000100 ; Row 12 (right)
+  .byte %10000000 ; Row 13 (right)
+  .byte %10000000 ; Row 14 (right)
+  .byte %10000000 ; Row 15 (right)
+  .byte %11000100 ; Row 16 (right)
+  .byte %01111000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBeginAttack31
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100001 ; Row 4 (left)
+  .byte %01111001 ; Row 5 (left)
+  .byte %00011101 ; Row 6 (left)
+  .byte %00001100 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00111111 ; Row 9 (left)
+  .byte %00111000 ; Row 10 (left)
+  .byte %01110001 ; Row 11 (left)
+  .byte %01110010 ; Row 12 (left)
+  .byte %01110010 ; Row 13 (left)
+  .byte %11111110 ; Row 14 (left)
+  .byte %11111110 ; Row 15 (left)
+  .byte %11110010 ; Row 16 (left)
+  .byte %01111001 ; Row 17 (left)
+  .byte %01111101 ; Row 18 (left)
+  .byte %01111100 ; Row 19 (left)
+  .byte %01110000 ; Row 20 (left)
+  .byte %01111100 ; Row 21 (left)
+  .byte %00110000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBeginAttack32
+  .byte %00000000 ; Row 1 (right)
+  .byte %11100000 ; Row 2 (right)
+  .byte %11100000 ; Row 3 (right)
+  .byte %10000000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %10000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %11110000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %00000000 ; Row 12 (right)
+  .byte %00000000 ; Row 13 (right)
+  .byte %00000000 ; Row 14 (right)
+  .byte %00000000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %11110000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBeginAttack41
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100001 ; Row 4 (left)
+  .byte %01111001 ; Row 5 (left)
+  .byte %00011101 ; Row 6 (left)
+  .byte %00001100 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00111111 ; Row 9 (left)
+  .byte %00111010 ; Row 10 (left)
+  .byte %01110010 ; Row 11 (left)
+  .byte %01110010 ; Row 12 (left)
+  .byte %01110010 ; Row 13 (left)
+  .byte %11111110 ; Row 14 (left)
+  .byte %11111110 ; Row 15 (left)
+  .byte %11110010 ; Row 16 (left)
+  .byte %01111010 ; Row 17 (left)
+  .byte %01111110 ; Row 18 (left)
+  .byte %01111111 ; Row 19 (left)
+  .byte %01110000 ; Row 20 (left)
+  .byte %01111100 ; Row 21 (left)
+  .byte %00110000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderBeginAttack42
+  .byte %00000000 ; Row 1 (right)
+  .byte %11100000 ; Row 2 (right)
+  .byte %11100000 ; Row 3 (right)
+  .byte %10000000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %10000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %11110000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %00000000 ; Row 12 (right)
+  .byte %00000000 ; Row 13 (right)
+  .byte %00000000 ; Row 14 (right)
+  .byte %00000000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %11110000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderBeginAttackSpeed:
+  .byte 10 ; Animation speed
+
+LoaderBeginAttackFrames:
+  .byte 4 ; Number of frames
+
+;Attack Animation Data:
+LoaderAttack11
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100001 ; Row 4 (left)
+  .byte %01111001 ; Row 5 (left)
+  .byte %00011101 ; Row 6 (left)
+  .byte %00001100 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00111111 ; Row 9 (left)
+  .byte %00111010 ; Row 10 (left)
+  .byte %01110010 ; Row 11 (left)
+  .byte %01110010 ; Row 12 (left)
+  .byte %01110010 ; Row 13 (left)
+  .byte %11111110 ; Row 14 (left)
+  .byte %11111110 ; Row 15 (left)
+  .byte %11110010 ; Row 16 (left)
+  .byte %01111010 ; Row 17 (left)
+  .byte %01111110 ; Row 18 (left)
+  .byte %01111111 ; Row 19 (left)
+  .byte %01110000 ; Row 20 (left)
+  .byte %01111100 ; Row 21 (left)
+  .byte %00110000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderAttack12
+  .byte %00000000 ; Row 1 (right)
+  .byte %11100000 ; Row 2 (right)
+  .byte %11100000 ; Row 3 (right)
+  .byte %10000000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %10000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %11110000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %00000000 ; Row 12 (right)
+  .byte %00000000 ; Row 13 (right)
+  .byte %00000000 ; Row 14 (right)
+  .byte %00000000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %11110000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderAttack21
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %01111000 ; Row 5 (left)
+  .byte %00011100 ; Row 6 (left)
+  .byte %00001100 ; Row 7 (left)
+  .byte %00011001 ; Row 8 (left)
+  .byte %00111111 ; Row 9 (left)
+  .byte %00111011 ; Row 10 (left)
+  .byte %01110010 ; Row 11 (left)
+  .byte %01110010 ; Row 12 (left)
+  .byte %01110010 ; Row 13 (left)
+  .byte %11111110 ; Row 14 (left)
+  .byte %11111110 ; Row 15 (left)
+  .byte %11110010 ; Row 16 (left)
+  .byte %01111010 ; Row 17 (left)
+  .byte %01111110 ; Row 18 (left)
+  .byte %01111111 ; Row 19 (left)
+  .byte %01110000 ; Row 20 (left)
+  .byte %01111100 ; Row 21 (left)
+  .byte %00110000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderAttack22
+  .byte %00000000 ; Row 1 (right)
+  .byte %00000000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11110000 ; Row 4 (right)
+  .byte %11100000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %11110000 ; Row 9 (right)
+  .byte %10000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %00000000 ; Row 12 (right)
+  .byte %00000000 ; Row 13 (right)
+  .byte %00000000 ; Row 14 (right)
+  .byte %00000000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %11110000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderAttack31
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00111000 ; Row 5 (left)
+  .byte %00011100 ; Row 6 (left)
+  .byte %00001100 ; Row 7 (left)
+  .byte %00011101 ; Row 8 (left)
+  .byte %00111111 ; Row 9 (left)
+  .byte %00111001 ; Row 10 (left)
+  .byte %01110001 ; Row 11 (left)
+  .byte %01110001 ; Row 12 (left)
+  .byte %01110001 ; Row 13 (left)
+  .byte %01111111 ; Row 14 (left)
+  .byte %01111111 ; Row 15 (left)
+  .byte %01110001 ; Row 16 (left)
+  .byte %00111001 ; Row 17 (left)
+  .byte %00111101 ; Row 18 (left)
+  .byte %00111111 ; Row 19 (left)
+  .byte %00111000 ; Row 20 (left)
+  .byte %00111110 ; Row 21 (left)
+  .byte %00011100 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderAttack32
+  .byte %00000000 ; Row 1 (right)
+  .byte %00000000 ; Row 2 (right)
+  .byte %00111000 ; Row 3 (right)
+  .byte %01111000 ; Row 4 (right)
+  .byte %01110000 ; Row 5 (right)
+  .byte %00110000 ; Row 6 (right)
+  .byte %00110000 ; Row 7 (right)
+  .byte %11100000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %11111000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %00000000 ; Row 12 (right)
+  .byte %00000000 ; Row 13 (right)
+  .byte %00000000 ; Row 14 (right)
+  .byte %00000000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %11111000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderAttack41
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00111000 ; Row 5 (left)
+  .byte %00011100 ; Row 6 (left)
+  .byte %00001100 ; Row 7 (left)
+  .byte %00011101 ; Row 8 (left)
+  .byte %00111111 ; Row 9 (left)
+  .byte %00111000 ; Row 10 (left)
+  .byte %00110000 ; Row 11 (left)
+  .byte %00111000 ; Row 12 (left)
+  .byte %00111000 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111111 ; Row 15 (left)
+  .byte %00111000 ; Row 16 (left)
+  .byte %00011000 ; Row 17 (left)
+  .byte %00011100 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00011100 ; Row 20 (left)
+  .byte %00011111 ; Row 21 (left)
+  .byte %00001110 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderAttack42
+  .byte %00000000 ; Row 1 (right)
+  .byte %00111000 ; Row 2 (right)
+  .byte %00111000 ; Row 3 (right)
+  .byte %01110000 ; Row 4 (right)
+  .byte %01110000 ; Row 5 (right)
+  .byte %00110000 ; Row 6 (right)
+  .byte %11100000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %11111100 ; Row 11 (right)
+  .byte %10000000 ; Row 12 (right)
+  .byte %10000000 ; Row 13 (right)
+  .byte %10000000 ; Row 14 (right)
+  .byte %10000000 ; Row 15 (right)
+  .byte %10000000 ; Row 16 (right)
+  .byte %10000000 ; Row 17 (right)
+  .byte %11111100 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderAttack51
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00111000 ; Row 5 (left)
+  .byte %00001100 ; Row 6 (left)
+  .byte %00001110 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00001111 ; Row 9 (left)
+  .byte %00011100 ; Row 10 (left)
+  .byte %00011100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00111100 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111111 ; Row 15 (left)
+  .byte %00011100 ; Row 16 (left)
+  .byte %00001100 ; Row 17 (left)
+  .byte %00001111 ; Row 18 (left)
+  .byte %00001111 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00001111 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderAttack52
+  .byte %00000000 ; Row 1 (right)
+  .byte %00111000 ; Row 2 (right)
+  .byte %00111000 ; Row 3 (right)
+  .byte %00110000 ; Row 4 (right)
+  .byte %00110000 ; Row 5 (right)
+  .byte %00110000 ; Row 6 (right)
+  .byte %11100000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %01111111 ; Row 12 (right)
+  .byte %01000000 ; Row 13 (right)
+  .byte %11000000 ; Row 14 (right)
+  .byte %11000000 ; Row 15 (right)
+  .byte %01000000 ; Row 16 (right)
+  .byte %01111111 ; Row 17 (right)
+  .byte %10000000 ; Row 18 (right)
+  .byte %10000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderAttack61
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00111000 ; Row 5 (left)
+  .byte %00001100 ; Row 6 (left)
+  .byte %00001110 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00001111 ; Row 9 (left)
+  .byte %00011100 ; Row 10 (left)
+  .byte %00011100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00111111 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111100 ; Row 15 (left)
+  .byte %00011100 ; Row 16 (left)
+  .byte %00001100 ; Row 17 (left)
+  .byte %00001111 ; Row 18 (left)
+  .byte %00001111 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00001111 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderAttack62
+  .byte %00000000 ; Row 1 (right)
+  .byte %00111000 ; Row 2 (right)
+  .byte %00111000 ; Row 3 (right)
+  .byte %00110000 ; Row 4 (right)
+  .byte %00110000 ; Row 5 (right)
+  .byte %00110000 ; Row 6 (right)
+  .byte %11100000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %11111000 ; Row 12 (right)
+  .byte %11111111 ; Row 13 (right)
+  .byte %11111111 ; Row 14 (right)
+  .byte %11111000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %10000000 ; Row 18 (right)
+  .byte %10000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderAttack71
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00111000 ; Row 5 (left)
+  .byte %00001100 ; Row 6 (left)
+  .byte %00001110 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00001111 ; Row 9 (left)
+  .byte %00011100 ; Row 10 (left)
+  .byte %00011100 ; Row 11 (left)
+  .byte %00011101 ; Row 12 (left)
+  .byte %00111111 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111101 ; Row 15 (left)
+  .byte %00011100 ; Row 16 (left)
+  .byte %00001100 ; Row 17 (left)
+  .byte %00001111 ; Row 18 (left)
+  .byte %00001111 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00001111 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderAttack72
+  .byte %00000000 ; Row 1 (right)
+  .byte %00111000 ; Row 2 (right)
+  .byte %00111000 ; Row 3 (right)
+  .byte %00110000 ; Row 4 (right)
+  .byte %00110000 ; Row 5 (right)
+  .byte %00110000 ; Row 6 (right)
+  .byte %11100000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %11110000 ; Row 12 (right)
+  .byte %11111110 ; Row 13 (right)
+  .byte %11111110 ; Row 14 (right)
+  .byte %11110000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %10000000 ; Row 18 (right)
+  .byte %10000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderAttack81
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00111000 ; Row 5 (left)
+  .byte %00001100 ; Row 6 (left)
+  .byte %00001110 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00001111 ; Row 9 (left)
+  .byte %00011100 ; Row 10 (left)
+  .byte %00011100 ; Row 11 (left)
+  .byte %00011101 ; Row 12 (left)
+  .byte %00111111 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111101 ; Row 15 (left)
+  .byte %00011100 ; Row 16 (left)
+  .byte %00001100 ; Row 17 (left)
+  .byte %00001111 ; Row 18 (left)
+  .byte %00001111 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00001111 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderAttack82
+  .byte %00000000 ; Row 1 (right)
+  .byte %00111000 ; Row 2 (right)
+  .byte %00111000 ; Row 3 (right)
+  .byte %00110000 ; Row 4 (right)
+  .byte %00110000 ; Row 5 (right)
+  .byte %00110000 ; Row 6 (right)
+  .byte %11100000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %11110000 ; Row 12 (right)
+  .byte %11111110 ; Row 13 (right)
+  .byte %11111110 ; Row 14 (right)
+  .byte %11110000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %10000000 ; Row 18 (right)
+  .byte %10000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderAttackSpeed:
+  .byte 5 ; Animation speed
+
+LoaderAttackFrames:
+  .byte 8 ; Number of frames
+
+;Walk Animation Data:
+LoaderWalk11
+  .byte %00000000 ; Row 1 (left)
+  .byte %00110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00110000 ; Row 5 (left)
+  .byte %00111000 ; Row 6 (left)
+  .byte %00011000 ; Row 7 (left)
+  .byte %00001100 ; Row 8 (left)
+  .byte %00000101 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00011101 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111110 ; Row 15 (left)
+  .byte %00111110 ; Row 16 (left)
+  .byte %00011100 ; Row 17 (left)
+  .byte %00011110 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00011111 ; Row 20 (left)
+  .byte %00011110 ; Row 21 (left)
+  .byte %00011111 ; Row 22 (left)
+  .byte %00001100 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderWalk12
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %01000000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %10000000 ; Row 9 (right)
+  .byte %00010000 ; Row 10 (right)
+  .byte %00101100 ; Row 11 (right)
+  .byte %11100010 ; Row 12 (right)
+  .byte %11000001 ; Row 13 (right)
+  .byte %01100000 ; Row 14 (right)
+  .byte %00100000 ; Row 15 (right)
+  .byte %00110000 ; Row 16 (right)
+  .byte %00001100 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderWalk21
+  .byte %00000000 ; Row 1 (left)
+  .byte %00111000 ; Row 2 (left)
+  .byte %00111000 ; Row 3 (left)
+  .byte %01110001 ; Row 4 (left)
+  .byte %00110001 ; Row 5 (left)
+  .byte %00111001 ; Row 6 (left)
+  .byte %00011100 ; Row 7 (left)
+  .byte %00000101 ; Row 8 (left)
+  .byte %00000111 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00000110 ; Row 11 (left)
+  .byte %00001110 ; Row 12 (left)
+  .byte %00011101 ; Row 13 (left)
+  .byte %00011111 ; Row 14 (left)
+  .byte %00011110 ; Row 15 (left)
+  .byte %00011111 ; Row 16 (left)
+  .byte %00001111 ; Row 17 (left)
+  .byte %00000110 ; Row 18 (left)
+  .byte %00001111 ; Row 19 (left)
+  .byte %00001111 ; Row 20 (left)
+  .byte %00001110 ; Row 21 (left)
+  .byte %00001111 ; Row 22 (left)
+  .byte %00000110 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderWalk22
+  .byte %00000000 ; Row 1 (right)
+  .byte %11100000 ; Row 2 (right)
+  .byte %11100000 ; Row 3 (right)
+  .byte %10000000 ; Row 4 (right)
+  .byte %10000000 ; Row 5 (right)
+  .byte %10000000 ; Row 6 (right)
+  .byte %10000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %10000000 ; Row 9 (right)
+  .byte %00110000 ; Row 10 (right)
+  .byte %01101000 ; Row 11 (right)
+  .byte %11000100 ; Row 12 (right)
+  .byte %10000010 ; Row 13 (right)
+  .byte %01000001 ; Row 14 (right)
+  .byte %01100000 ; Row 15 (right)
+  .byte %00010000 ; Row 16 (right)
+  .byte %00011000 ; Row 17 (right)
+  .byte %00000100 ; Row 18 (right)
+  .byte %10000000 ; Row 19 (right)
+  .byte %10000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %10000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderWalk31
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000011 ; Row 2 (left)
+  .byte %00100011 ; Row 3 (left)
+  .byte %01100011 ; Row 4 (left)
+  .byte %01100011 ; Row 5 (left)
+  .byte %01111111 ; Row 6 (left)
+  .byte %00011111 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00000111 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00001110 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00011111 ; Row 13 (left)
+  .byte %00011111 ; Row 14 (left)
+  .byte %00011111 ; Row 15 (left)
+  .byte %00011111 ; Row 16 (left)
+  .byte %00000110 ; Row 17 (left)
+  .byte %00001111 ; Row 18 (left)
+  .byte %00001111 ; Row 19 (left)
+  .byte %00001100 ; Row 20 (left)
+  .byte %00001111 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderWalk32
+  .byte %00000000 ; Row 1 (right)
+  .byte %10000000 ; Row 2 (right)
+  .byte %10000000 ; Row 3 (right)
+  .byte %00000000 ; Row 4 (right)
+  .byte %00000000 ; Row 5 (right)
+  .byte %00000000 ; Row 6 (right)
+  .byte %00000000 ; Row 7 (right)
+  .byte %00000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00110000 ; Row 10 (right)
+  .byte %01101000 ; Row 11 (right)
+  .byte %11000100 ; Row 12 (right)
+  .byte %10000010 ; Row 13 (right)
+  .byte %01000001 ; Row 14 (right)
+  .byte %01100000 ; Row 15 (right)
+  .byte %00010000 ; Row 16 (right)
+  .byte %00011100 ; Row 17 (right)
+  .byte %10000100 ; Row 18 (right)
+  .byte %10000000 ; Row 19 (right)
+  .byte %10000000 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderWalk41
+  .byte %00000000 ; Row 1 (left)
+  .byte %00001111 ; Row 2 (left)
+  .byte %00001111 ; Row 3 (left)
+  .byte %00001100 ; Row 4 (left)
+  .byte %00110110 ; Row 5 (left)
+  .byte %00111110 ; Row 6 (left)
+  .byte %00111110 ; Row 7 (left)
+  .byte %00011111 ; Row 8 (left)
+  .byte %00001111 ; Row 9 (left)
+  .byte %00001110 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00111111 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111110 ; Row 15 (left)
+  .byte %00011110 ; Row 16 (left)
+  .byte %00001100 ; Row 17 (left)
+  .byte %00011111 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00010011 ; Row 20 (left)
+  .byte %00011111 ; Row 21 (left)
+  .byte %00001110 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderWalk42
+  .byte %00000000 ; Row 1 (right)
+  .byte %00000000 ; Row 2 (right)
+  .byte %00000000 ; Row 3 (right)
+  .byte %00000000 ; Row 4 (right)
+  .byte %00000000 ; Row 5 (right)
+  .byte %00000000 ; Row 6 (right)
+  .byte %00000000 ; Row 7 (right)
+  .byte %00000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00110000 ; Row 10 (right)
+  .byte %01101000 ; Row 11 (right)
+  .byte %11000100 ; Row 12 (right)
+  .byte %10000010 ; Row 13 (right)
+  .byte %01000001 ; Row 14 (right)
+  .byte %01100000 ; Row 15 (right)
+  .byte %00010000 ; Row 16 (right)
+  .byte %00011100 ; Row 17 (right)
+  .byte %00000100 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderWalk51
+  .byte %00000000 ; Row 1 (left)
+  .byte %00011100 ; Row 2 (left)
+  .byte %00011100 ; Row 3 (left)
+  .byte %00011011 ; Row 4 (left)
+  .byte %00011011 ; Row 5 (left)
+  .byte %00011011 ; Row 6 (left)
+  .byte %00001101 ; Row 7 (left)
+  .byte %00001110 ; Row 8 (left)
+  .byte %00000111 ; Row 9 (left)
+  .byte %00000110 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011101 ; Row 12 (left)
+  .byte %00111111 ; Row 13 (left)
+  .byte %00111110 ; Row 14 (left)
+  .byte %00111110 ; Row 15 (left)
+  .byte %00011110 ; Row 16 (left)
+  .byte %00001100 ; Row 17 (left)
+  .byte %00001111 ; Row 18 (left)
+  .byte %00001111 ; Row 19 (left)
+  .byte %00000011 ; Row 20 (left)
+  .byte %00001111 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderWalk52
+  .byte %00000000 ; Row 1 (right)
+  .byte %00000000 ; Row 2 (right)
+  .byte %00000000 ; Row 3 (right)
+  .byte %10000000 ; Row 4 (right)
+  .byte %10000000 ; Row 5 (right)
+  .byte %00000000 ; Row 6 (right)
+  .byte %10000000 ; Row 7 (right)
+  .byte %10000000 ; Row 8 (right)
+  .byte %10100000 ; Row 9 (right)
+  .byte %01110000 ; Row 10 (right)
+  .byte %11001000 ; Row 11 (right)
+  .byte %10000100 ; Row 12 (right)
+  .byte %10000010 ; Row 13 (right)
+  .byte %01000000 ; Row 14 (right)
+  .byte %01100000 ; Row 15 (right)
+  .byte %00010000 ; Row 16 (right)
+  .byte %00011000 ; Row 17 (right)
+  .byte %10000000 ; Row 18 (right)
+  .byte %10000000 ; Row 19 (right)
+  .byte %10000000 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderWalk61
+  .byte %00000000 ; Row 1 (left)
+  .byte %00111000 ; Row 2 (left)
+  .byte %00111000 ; Row 3 (left)
+  .byte %01110000 ; Row 4 (left)
+  .byte %01110001 ; Row 5 (left)
+  .byte %00110001 ; Row 6 (left)
+  .byte %00011000 ; Row 7 (left)
+  .byte %00001110 ; Row 8 (left)
+  .byte %00000111 ; Row 9 (left)
+  .byte %00000110 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00111111 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111110 ; Row 15 (left)
+  .byte %00011110 ; Row 16 (left)
+  .byte %00001100 ; Row 17 (left)
+  .byte %00001111 ; Row 18 (left)
+  .byte %00001111 ; Row 19 (left)
+  .byte %00000111 ; Row 20 (left)
+  .byte %00001111 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderWalk62
+  .byte %00000000 ; Row 1 (right)
+  .byte %00000000 ; Row 2 (right)
+  .byte %00000000 ; Row 3 (right)
+  .byte %11100000 ; Row 4 (right)
+  .byte %11100000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %11000000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %10000000 ; Row 9 (right)
+  .byte %00110000 ; Row 10 (right)
+  .byte %01101000 ; Row 11 (right)
+  .byte %11000100 ; Row 12 (right)
+  .byte %10000010 ; Row 13 (right)
+  .byte %01000001 ; Row 14 (right)
+  .byte %01100000 ; Row 15 (right)
+  .byte %00010000 ; Row 16 (right)
+  .byte %00011100 ; Row 17 (right)
+  .byte %10000100 ; Row 18 (right)
+  .byte %10000000 ; Row 19 (right)
+  .byte %10000000 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderWalk71
+  .byte %00000000 ; Row 1 (left)
+  .byte %01110000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %01100000 ; Row 4 (left)
+  .byte %00111000 ; Row 5 (left)
+  .byte %00011100 ; Row 6 (left)
+  .byte %00001110 ; Row 7 (left)
+  .byte %00000110 ; Row 8 (left)
+  .byte %00000101 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00011100 ; Row 12 (left)
+  .byte %00011101 ; Row 13 (left)
+  .byte %00111111 ; Row 14 (left)
+  .byte %00111110 ; Row 15 (left)
+  .byte %00111110 ; Row 16 (left)
+  .byte %00011100 ; Row 17 (left)
+  .byte %00011110 ; Row 18 (left)
+  .byte %00011111 ; Row 19 (left)
+  .byte %00011111 ; Row 20 (left)
+  .byte %00011111 ; Row 21 (left)
+  .byte %00011111 ; Row 22 (left)
+  .byte %00001100 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+LoaderWalk72
+  .byte %00000000 ; Row 1 (right)
+  .byte %01110000 ; Row 2 (right)
+  .byte %01110000 ; Row 3 (right)
+  .byte %01100000 ; Row 4 (right)
+  .byte %01000000 ; Row 5 (right)
+  .byte %01100000 ; Row 6 (right)
+  .byte %01100000 ; Row 7 (right)
+  .byte %11100000 ; Row 8 (right)
+  .byte %11000000 ; Row 9 (right)
+  .byte %00010000 ; Row 10 (right)
+  .byte %00101100 ; Row 11 (right)
+  .byte %11100010 ; Row 12 (right)
+  .byte %11000001 ; Row 13 (right)
+  .byte %01100000 ; Row 14 (right)
+  .byte %00100000 ; Row 15 (right)
+  .byte %00110000 ; Row 16 (right)
+  .byte %00001100 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+LoaderWalkSpeed:
+  .byte 9 ; Animation speed
+
+LoaderWalkFrames:
+  .byte 7 ; Number of frames
+
+
+
+
+
+
+
+
+
+
+
+;AlienQueen Sprite Data (Height: 24, Mode: doubleWidth)
+
+;Standing Animation Data:
+AlienQueenStanding11
+  .byte %00000000 ; Row 1 (left)
+  .byte %01001000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %00011000 ; Row 4 (left)
+  .byte %00001100 ; Row 5 (left)
+  .byte %00000110 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000010 ; Row 8 (left)
+  .byte %00001100 ; Row 9 (left)
+  .byte %00001100 ; Row 10 (left)
+  .byte %01000110 ; Row 11 (left)
+  .byte %10000011 ; Row 12 (left)
+  .byte %11100001 ; Row 13 (left)
+  .byte %00111101 ; Row 14 (left)
+  .byte %00000101 ; Row 15 (left)
+  .byte %01100111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %01110110 ; Row 18 (left)
+  .byte %00110000 ; Row 19 (left)
+  .byte %00011100 ; Row 20 (left)
+  .byte %00001110 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000001 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenStanding12
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001100 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %00001100 ; Row 6 (right)
+  .byte %00001000 ; Row 7 (right)
+  .byte %00011000 ; Row 8 (right)
+  .byte %01110000 ; Row 9 (right)
+  .byte %11001100 ; Row 10 (right)
+  .byte %11010010 ; Row 11 (right)
+  .byte %11100001 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %10000001 ; Row 15 (right)
+  .byte %01100010 ; Row 16 (right)
+  .byte %00000100 ; Row 17 (right)
+  .byte %11100101 ; Row 18 (right)
+  .byte %00000101 ; Row 19 (right)
+  .byte %00000010 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %10000000 ; Row 22 (right)
+  .byte %11100000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenStanding21
+  .byte %00000000 ; Row 1 (left)
+  .byte %01001000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %00011000 ; Row 4 (left)
+  .byte %00001100 ; Row 5 (left)
+  .byte %00000110 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000010 ; Row 8 (left)
+  .byte %00001100 ; Row 9 (left)
+  .byte %00001100 ; Row 10 (left)
+  .byte %00100110 ; Row 11 (left)
+  .byte %01011011 ; Row 12 (left)
+  .byte %01110111 ; Row 13 (left)
+  .byte %00000111 ; Row 14 (left)
+  .byte %00000101 ; Row 15 (left)
+  .byte %01100111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %01110110 ; Row 18 (left)
+  .byte %00110000 ; Row 19 (left)
+  .byte %00011100 ; Row 20 (left)
+  .byte %00001110 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000001 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenStanding22
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001100 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %00001100 ; Row 6 (right)
+  .byte %00001000 ; Row 7 (right)
+  .byte %00011000 ; Row 8 (right)
+  .byte %01110000 ; Row 9 (right)
+  .byte %11000000 ; Row 10 (right)
+  .byte %11001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %10000001 ; Row 15 (right)
+  .byte %01100001 ; Row 16 (right)
+  .byte %00000001 ; Row 17 (right)
+  .byte %11100110 ; Row 18 (right)
+  .byte %00000100 ; Row 19 (right)
+  .byte %00001000 ; Row 20 (right)
+  .byte %00001000 ; Row 21 (right)
+  .byte %10001001 ; Row 22 (right)
+  .byte %11100110 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenStanding31
+  .byte %00000000 ; Row 1 (left)
+  .byte %01001000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %00011100 ; Row 4 (left)
+  .byte %00000110 ; Row 5 (left)
+  .byte %00000010 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00011100 ; Row 9 (left)
+  .byte %00011000 ; Row 10 (left)
+  .byte %00000111 ; Row 11 (left)
+  .byte %00110001 ; Row 12 (left)
+  .byte %00111110 ; Row 13 (left)
+  .byte %00000010 ; Row 14 (left)
+  .byte %01100001 ; Row 15 (left)
+  .byte %01110111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %00110110 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000001 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenStanding32
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00000110 ; Row 4 (right)
+  .byte %00000110 ; Row 5 (right)
+  .byte %00000110 ; Row 6 (right)
+  .byte %00001100 ; Row 7 (right)
+  .byte %00001100 ; Row 8 (right)
+  .byte %00111000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %11011100 ; Row 11 (right)
+  .byte %11100010 ; Row 12 (right)
+  .byte %11000001 ; Row 13 (right)
+  .byte %11100001 ; Row 14 (right)
+  .byte %11000001 ; Row 15 (right)
+  .byte %11000001 ; Row 16 (right)
+  .byte %10110001 ; Row 17 (right)
+  .byte %10000001 ; Row 18 (right)
+  .byte %01110010 ; Row 19 (right)
+  .byte %00000100 ; Row 20 (right)
+  .byte %10001000 ; Row 21 (right)
+  .byte %11101000 ; Row 22 (right)
+  .byte %00001000 ; Row 23 (right)
+  .byte %00000110 ; Row 24 (right)
+
+AlienQueenStanding41
+  .byte %00000000 ; Row 1 (left)
+  .byte %01001000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %00011100 ; Row 4 (left)
+  .byte %00000110 ; Row 5 (left)
+  .byte %00000010 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00011100 ; Row 9 (left)
+  .byte %00011000 ; Row 10 (left)
+  .byte %00000111 ; Row 11 (left)
+  .byte %01001101 ; Row 12 (left)
+  .byte %00110010 ; Row 13 (left)
+  .byte %01000010 ; Row 14 (left)
+  .byte %01100001 ; Row 15 (left)
+  .byte %01110111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %00110110 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000001 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenStanding42
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00000110 ; Row 4 (right)
+  .byte %00000110 ; Row 5 (right)
+  .byte %00000110 ; Row 6 (right)
+  .byte %00001100 ; Row 7 (right)
+  .byte %00001100 ; Row 8 (right)
+  .byte %00111000 ; Row 9 (right)
+  .byte %11101110 ; Row 10 (right)
+  .byte %11010001 ; Row 11 (right)
+  .byte %11100001 ; Row 12 (right)
+  .byte %11000001 ; Row 13 (right)
+  .byte %11100001 ; Row 14 (right)
+  .byte %11000110 ; Row 15 (right)
+  .byte %11001000 ; Row 16 (right)
+  .byte %10111000 ; Row 17 (right)
+  .byte %10001000 ; Row 18 (right)
+  .byte %01110110 ; Row 19 (right)
+  .byte %00000001 ; Row 20 (right)
+  .byte %10000001 ; Row 21 (right)
+  .byte %11100010 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenStandingSpeed:
+  .byte 15 ; Animation speed
+
+AlienQueenStandingFrames:
+  .byte 4 ; Number of frames
+
+;Walk Animation Data:
+AlienQueenWalk11
+  .byte %00000000 ; Row 1 (left)
+  .byte %01001000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %00011000 ; Row 4 (left)
+  .byte %00001100 ; Row 5 (left)
+  .byte %00000110 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000010 ; Row 8 (left)
+  .byte %00001100 ; Row 9 (left)
+  .byte %00001100 ; Row 10 (left)
+  .byte %01000110 ; Row 11 (left)
+  .byte %10000011 ; Row 12 (left)
+  .byte %11100001 ; Row 13 (left)
+  .byte %00111101 ; Row 14 (left)
+  .byte %00000101 ; Row 15 (left)
+  .byte %01100111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %01110110 ; Row 18 (left)
+  .byte %00110000 ; Row 19 (left)
+  .byte %00011100 ; Row 20 (left)
+  .byte %00001110 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000001 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenWalk12
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001100 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %00001100 ; Row 6 (right)
+  .byte %00001000 ; Row 7 (right)
+  .byte %00011000 ; Row 8 (right)
+  .byte %01110000 ; Row 9 (right)
+  .byte %11001100 ; Row 10 (right)
+  .byte %11010010 ; Row 11 (right)
+  .byte %11100001 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %10000001 ; Row 15 (right)
+  .byte %01100010 ; Row 16 (right)
+  .byte %00000100 ; Row 17 (right)
+  .byte %11100101 ; Row 18 (right)
+  .byte %00000101 ; Row 19 (right)
+  .byte %00000010 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %10000000 ; Row 22 (right)
+  .byte %11100000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenWalk21
+  .byte %00000000 ; Row 1 (left)
+  .byte %00100100 ; Row 2 (left)
+  .byte %00111000 ; Row 3 (left)
+  .byte %00001100 ; Row 4 (left)
+  .byte %00000110 ; Row 5 (left)
+  .byte %00000011 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000011 ; Row 8 (left)
+  .byte %00000110 ; Row 9 (left)
+  .byte %00000111 ; Row 10 (left)
+  .byte %00100011 ; Row 11 (left)
+  .byte %01000001 ; Row 12 (left)
+  .byte %01111101 ; Row 13 (left)
+  .byte %00000011 ; Row 14 (left)
+  .byte %00000101 ; Row 15 (left)
+  .byte %01100111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %01110110 ; Row 18 (left)
+  .byte %00110000 ; Row 19 (left)
+  .byte %00011100 ; Row 20 (left)
+  .byte %00001110 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000001 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenWalk22
+  .byte %00000000 ; Row 1 (right)
+  .byte %01000000 ; Row 2 (right)
+  .byte %00110100 ; Row 3 (right)
+  .byte %00011000 ; Row 4 (right)
+  .byte %00011000 ; Row 5 (right)
+  .byte %00011000 ; Row 6 (right)
+  .byte %10001000 ; Row 7 (right)
+  .byte %00001000 ; Row 8 (right)
+  .byte %01111000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %11001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %10000001 ; Row 15 (right)
+  .byte %01100011 ; Row 16 (right)
+  .byte %00000100 ; Row 17 (right)
+  .byte %11101000 ; Row 18 (right)
+  .byte %00010000 ; Row 19 (right)
+  .byte %00010000 ; Row 20 (right)
+  .byte %00010000 ; Row 21 (right)
+  .byte %10001000 ; Row 22 (right)
+  .byte %11100000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenWalk31
+  .byte %00000000 ; Row 1 (left)
+  .byte %00001001 ; Row 2 (left)
+  .byte %00001110 ; Row 3 (left)
+  .byte %00001100 ; Row 4 (left)
+  .byte %00000111 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000000 ; Row 7 (left)
+  .byte %00000001 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00100011 ; Row 10 (left)
+  .byte %01010000 ; Row 11 (left)
+  .byte %01000001 ; Row 12 (left)
+  .byte %00111101 ; Row 13 (left)
+  .byte %00000011 ; Row 14 (left)
+  .byte %01100001 ; Row 15 (left)
+  .byte %01111111 ; Row 16 (left)
+  .byte %01110111 ; Row 17 (left)
+  .byte %00110000 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000011 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenWalk32
+  .byte %00000000 ; Row 1 (right)
+  .byte %00000000 ; Row 2 (right)
+  .byte %00000000 ; Row 3 (right)
+  .byte %10010000 ; Row 4 (right)
+  .byte %01110000 ; Row 5 (right)
+  .byte %11111000 ; Row 6 (right)
+  .byte %11011000 ; Row 7 (right)
+  .byte %11110000 ; Row 8 (right)
+  .byte %11000000 ; Row 9 (right)
+  .byte %11000000 ; Row 10 (right)
+  .byte %11000000 ; Row 11 (right)
+  .byte %11100000 ; Row 12 (right)
+  .byte %10011000 ; Row 13 (right)
+  .byte %11000100 ; Row 14 (right)
+  .byte %10000010 ; Row 15 (right)
+  .byte %11000001 ; Row 16 (right)
+  .byte %00100101 ; Row 17 (right)
+  .byte %10001001 ; Row 18 (right)
+  .byte %01101001 ; Row 19 (right)
+  .byte %00001001 ; Row 20 (right)
+  .byte %10001001 ; Row 21 (right)
+  .byte %11100110 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenWalk41
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000100 ; Row 2 (left)
+  .byte %00000011 ; Row 3 (left)
+  .byte %00000011 ; Row 4 (left)
+  .byte %00001001 ; Row 5 (left)
+  .byte %00001111 ; Row 6 (left)
+  .byte %00000011 ; Row 7 (left)
+  .byte %00000011 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00000011 ; Row 10 (left)
+  .byte %01000001 ; Row 11 (left)
+  .byte %00110001 ; Row 12 (left)
+  .byte %01101101 ; Row 13 (left)
+  .byte %00000011 ; Row 14 (left)
+  .byte %01100001 ; Row 15 (left)
+  .byte %01100111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %00110110 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000011 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenWalk42
+  .byte %00000000 ; Row 1 (right)
+  .byte %10000000 ; Row 2 (right)
+  .byte %10000000 ; Row 3 (right)
+  .byte %00000000 ; Row 4 (right)
+  .byte %10000000 ; Row 5 (right)
+  .byte %11000000 ; Row 6 (right)
+  .byte %11100000 ; Row 7 (right)
+  .byte %11000000 ; Row 8 (right)
+  .byte %00100000 ; Row 9 (right)
+  .byte %11101110 ; Row 10 (right)
+  .byte %10010001 ; Row 11 (right)
+  .byte %11100001 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %10000001 ; Row 15 (right)
+  .byte %01000110 ; Row 16 (right)
+  .byte %00101000 ; Row 17 (right)
+  .byte %10001000 ; Row 18 (right)
+  .byte %01101000 ; Row 19 (right)
+  .byte %00000110 ; Row 20 (right)
+  .byte %00000001 ; Row 21 (right)
+  .byte %11100001 ; Row 22 (right)
+  .byte %00000010 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenWalk51
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000000 ; Row 2 (left)
+  .byte %00000000 ; Row 3 (left)
+  .byte %00000000 ; Row 4 (left)
+  .byte %00000000 ; Row 5 (left)
+  .byte %00010111 ; Row 6 (left)
+  .byte %00011001 ; Row 7 (left)
+  .byte %00000011 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00000001 ; Row 10 (left)
+  .byte %00000001 ; Row 11 (left)
+  .byte %10000001 ; Row 12 (left)
+  .byte %01111001 ; Row 13 (left)
+  .byte %10001101 ; Row 14 (left)
+  .byte %00000101 ; Row 15 (left)
+  .byte %01100111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %01110110 ; Row 18 (left)
+  .byte %00110000 ; Row 19 (left)
+  .byte %00011100 ; Row 20 (left)
+  .byte %00001110 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000001 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenWalk52
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00111000 ; Row 3 (right)
+  .byte %00011000 ; Row 4 (right)
+  .byte %00011000 ; Row 5 (right)
+  .byte %10001000 ; Row 6 (right)
+  .byte %11001000 ; Row 7 (right)
+  .byte %11001000 ; Row 8 (right)
+  .byte %00111000 ; Row 9 (right)
+  .byte %11111000 ; Row 10 (right)
+  .byte %10011100 ; Row 11 (right)
+  .byte %11100010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %10000110 ; Row 15 (right)
+  .byte %01101000 ; Row 16 (right)
+  .byte %00001010 ; Row 17 (right)
+  .byte %11101001 ; Row 18 (right)
+  .byte %00001001 ; Row 19 (right)
+  .byte %00000110 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %10000000 ; Row 22 (right)
+  .byte %11100000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenWalkSpeed:
+  .byte 10 ; Animation speed
+
+AlienQueenWalkFrames:
+  .byte 5 ; Number of frames
+
+;BeginAttack Animation Data:
+AlienQueenBeginAttack11
+  .byte %00000000 ; Row 1 (left)
+  .byte %01001000 ; Row 2 (left)
+  .byte %01110000 ; Row 3 (left)
+  .byte %00011000 ; Row 4 (left)
+  .byte %00001100 ; Row 5 (left)
+  .byte %00000110 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000010 ; Row 8 (left)
+  .byte %00001100 ; Row 9 (left)
+  .byte %00001100 ; Row 10 (left)
+  .byte %01000110 ; Row 11 (left)
+  .byte %10000011 ; Row 12 (left)
+  .byte %11100001 ; Row 13 (left)
+  .byte %00111101 ; Row 14 (left)
+  .byte %00000101 ; Row 15 (left)
+  .byte %01100111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %01110110 ; Row 18 (left)
+  .byte %00110000 ; Row 19 (left)
+  .byte %00011100 ; Row 20 (left)
+  .byte %00001110 ; Row 21 (left)
+  .byte %00000111 ; Row 22 (left)
+  .byte %00000001 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenBeginAttack12
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001100 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %00001100 ; Row 6 (right)
+  .byte %00001000 ; Row 7 (right)
+  .byte %00011000 ; Row 8 (right)
+  .byte %01110000 ; Row 9 (right)
+  .byte %11001100 ; Row 10 (right)
+  .byte %11010010 ; Row 11 (right)
+  .byte %11100001 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %10000001 ; Row 15 (right)
+  .byte %01100010 ; Row 16 (right)
+  .byte %00000100 ; Row 17 (right)
+  .byte %11100101 ; Row 18 (right)
+  .byte %00000101 ; Row 19 (right)
+  .byte %00000010 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %10000000 ; Row 22 (right)
+  .byte %11100000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenBeginAttack21
+  .byte %00000000 ; Row 1 (left)
+  .byte %01000000 ; Row 2 (left)
+  .byte %01111000 ; Row 3 (left)
+  .byte %00011000 ; Row 4 (left)
+  .byte %00001100 ; Row 5 (left)
+  .byte %00000011 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000011 ; Row 8 (left)
+  .byte %00001110 ; Row 9 (left)
+  .byte %00001100 ; Row 10 (left)
+  .byte %00100110 ; Row 11 (left)
+  .byte %01000011 ; Row 12 (left)
+  .byte %01111111 ; Row 13 (left)
+  .byte %00000011 ; Row 14 (left)
+  .byte %01100011 ; Row 15 (left)
+  .byte %01100011 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %00110110 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000001 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenBeginAttack22
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001100 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %00001100 ; Row 6 (right)
+  .byte %00001000 ; Row 7 (right)
+  .byte %00011000 ; Row 8 (right)
+  .byte %00111000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %11011100 ; Row 11 (right)
+  .byte %11100010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %10000001 ; Row 15 (right)
+  .byte %01100010 ; Row 16 (right)
+  .byte %00000100 ; Row 17 (right)
+  .byte %11100100 ; Row 18 (right)
+  .byte %00000101 ; Row 19 (right)
+  .byte %00000101 ; Row 20 (right)
+  .byte %10000010 ; Row 21 (right)
+  .byte %11100000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenBeginAttack31
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000000 ; Row 2 (left)
+  .byte %00100100 ; Row 3 (left)
+  .byte %00111000 ; Row 4 (left)
+  .byte %00001110 ; Row 5 (left)
+  .byte %00000011 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00001111 ; Row 8 (left)
+  .byte %00001110 ; Row 9 (left)
+  .byte %00000110 ; Row 10 (left)
+  .byte %00010011 ; Row 11 (left)
+  .byte %00100011 ; Row 12 (left)
+  .byte %00111111 ; Row 13 (left)
+  .byte %00000011 ; Row 14 (left)
+  .byte %00110000 ; Row 15 (left)
+  .byte %00111001 ; Row 16 (left)
+  .byte %00111111 ; Row 17 (left)
+  .byte %00011001 ; Row 18 (left)
+  .byte %00001110 ; Row 19 (left)
+  .byte %00000111 ; Row 20 (left)
+  .byte %00000011 ; Row 21 (left)
+  .byte %00000000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenBeginAttack32
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001100 ; Row 4 (right)
+  .byte %00000110 ; Row 5 (right)
+  .byte %00000110 ; Row 6 (right)
+  .byte %10011100 ; Row 7 (right)
+  .byte %00110000 ; Row 8 (right)
+  .byte %11100000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %10001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %11000001 ; Row 15 (right)
+  .byte %11110010 ; Row 16 (right)
+  .byte %11000100 ; Row 17 (right)
+  .byte %01110100 ; Row 18 (right)
+  .byte %00000101 ; Row 19 (right)
+  .byte %10000101 ; Row 20 (right)
+  .byte %11000101 ; Row 21 (right)
+  .byte %11110010 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenBeginAttack41
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000000 ; Row 2 (left)
+  .byte %00010010 ; Row 3 (left)
+  .byte %00001110 ; Row 4 (left)
+  .byte %00000011 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00000111 ; Row 9 (left)
+  .byte %00000110 ; Row 10 (left)
+  .byte %00011011 ; Row 11 (left)
+  .byte %00011011 ; Row 12 (left)
+  .byte %00000111 ; Row 13 (left)
+  .byte %00011001 ; Row 14 (left)
+  .byte %00011000 ; Row 15 (left)
+  .byte %00011101 ; Row 16 (left)
+  .byte %00011111 ; Row 17 (left)
+  .byte %00001110 ; Row 18 (left)
+  .byte %00000111 ; Row 19 (left)
+  .byte %00000011 ; Row 20 (left)
+  .byte %00000001 ; Row 21 (left)
+  .byte %00000000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenBeginAttack42
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001100 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %00000110 ; Row 6 (right)
+  .byte %10011110 ; Row 7 (right)
+  .byte %11111000 ; Row 8 (right)
+  .byte %11100000 ; Row 9 (right)
+  .byte %11000000 ; Row 10 (right)
+  .byte %10001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %11000001 ; Row 15 (right)
+  .byte %11110010 ; Row 16 (right)
+  .byte %11000100 ; Row 17 (right)
+  .byte %01110100 ; Row 18 (right)
+  .byte %00000101 ; Row 19 (right)
+  .byte %11000101 ; Row 20 (right)
+  .byte %11100101 ; Row 21 (right)
+  .byte %01111101 ; Row 22 (right)
+  .byte %00000010 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenBeginAttack51
+  .byte %00000000 ; Row 1 (left)
+  .byte %00001001 ; Row 2 (left)
+  .byte %00001110 ; Row 3 (left)
+  .byte %00000110 ; Row 4 (left)
+  .byte %00000011 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000000 ; Row 7 (left)
+  .byte %00000011 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00001000 ; Row 10 (left)
+  .byte %00001111 ; Row 11 (left)
+  .byte %00000011 ; Row 12 (left)
+  .byte %00011001 ; Row 13 (left)
+  .byte %00001000 ; Row 14 (left)
+  .byte %00111000 ; Row 15 (left)
+  .byte %00111101 ; Row 16 (left)
+  .byte %00011111 ; Row 17 (left)
+  .byte %00001110 ; Row 18 (left)
+  .byte %00000111 ; Row 19 (left)
+  .byte %00000011 ; Row 20 (left)
+  .byte %00000001 ; Row 21 (left)
+  .byte %00000000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenBeginAttack52
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %11001100 ; Row 6 (right)
+  .byte %11011100 ; Row 7 (right)
+  .byte %11111000 ; Row 8 (right)
+  .byte %11100000 ; Row 9 (right)
+  .byte %11000000 ; Row 10 (right)
+  .byte %10001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %11000001 ; Row 15 (right)
+  .byte %11110001 ; Row 16 (right)
+  .byte %11000010 ; Row 17 (right)
+  .byte %01110100 ; Row 18 (right)
+  .byte %00000100 ; Row 19 (right)
+  .byte %11000101 ; Row 20 (right)
+  .byte %11100101 ; Row 21 (right)
+  .byte %01111011 ; Row 22 (right)
+  .byte %00000011 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenBeginAttack61
+  .byte %00000000 ; Row 1 (left)
+  .byte %00001001 ; Row 2 (left)
+  .byte %00001110 ; Row 3 (left)
+  .byte %00000110 ; Row 4 (left)
+  .byte %00000011 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000000 ; Row 7 (left)
+  .byte %00000011 ; Row 8 (left)
+  .byte %00001011 ; Row 9 (left)
+  .byte %00001100 ; Row 10 (left)
+  .byte %00010011 ; Row 11 (left)
+  .byte %00001001 ; Row 12 (left)
+  .byte %00001001 ; Row 13 (left)
+  .byte %00001000 ; Row 14 (left)
+  .byte %00111000 ; Row 15 (left)
+  .byte %00111101 ; Row 16 (left)
+  .byte %00011111 ; Row 17 (left)
+  .byte %00001110 ; Row 18 (left)
+  .byte %00000111 ; Row 19 (left)
+  .byte %00000011 ; Row 20 (left)
+  .byte %00000001 ; Row 21 (left)
+  .byte %00000000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenBeginAttack62
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %11001100 ; Row 6 (right)
+  .byte %11011100 ; Row 7 (right)
+  .byte %11111000 ; Row 8 (right)
+  .byte %11100000 ; Row 9 (right)
+  .byte %11000000 ; Row 10 (right)
+  .byte %10001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %11000001 ; Row 15 (right)
+  .byte %11110001 ; Row 16 (right)
+  .byte %11000001 ; Row 17 (right)
+  .byte %01110001 ; Row 18 (right)
+  .byte %00000001 ; Row 19 (right)
+  .byte %11000010 ; Row 20 (right)
+  .byte %11100100 ; Row 21 (right)
+  .byte %01111100 ; Row 22 (right)
+  .byte %00000100 ; Row 23 (right)
+  .byte %00000010 ; Row 24 (right)
+
+AlienQueenBeginAttackSpeed:
+  .byte 6 ; Animation speed
+
+AlienQueenBeginAttackFrames:
+  .byte 6 ; Number of frames
+
+;Attack Animation Data:
+AlienQueenAttack11
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000001 ; Row 2 (left)
+  .byte %00001010 ; Row 3 (left)
+  .byte %00001110 ; Row 4 (left)
+  .byte %00000011 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000000 ; Row 7 (left)
+  .byte %00000011 ; Row 8 (left)
+  .byte %00001011 ; Row 9 (left)
+  .byte %00001100 ; Row 10 (left)
+  .byte %00100111 ; Row 11 (left)
+  .byte %00010001 ; Row 12 (left)
+  .byte %00010001 ; Row 13 (left)
+  .byte %00110000 ; Row 14 (left)
+  .byte %01110000 ; Row 15 (left)
+  .byte %01110001 ; Row 16 (left)
+  .byte %00111111 ; Row 17 (left)
+  .byte %00011100 ; Row 18 (left)
+  .byte %00001110 ; Row 19 (left)
+  .byte %00000111 ; Row 20 (left)
+  .byte %00000011 ; Row 21 (left)
+  .byte %00000000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenAttack12
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %10001100 ; Row 5 (right)
+  .byte %11001100 ; Row 6 (right)
+  .byte %11011100 ; Row 7 (right)
+  .byte %11111000 ; Row 8 (right)
+  .byte %11100000 ; Row 9 (right)
+  .byte %11000000 ; Row 10 (right)
+  .byte %10001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %11000001 ; Row 15 (right)
+  .byte %11110001 ; Row 16 (right)
+  .byte %11000001 ; Row 17 (right)
+  .byte %01110001 ; Row 18 (right)
+  .byte %00000001 ; Row 19 (right)
+  .byte %00000010 ; Row 20 (right)
+  .byte %11000100 ; Row 21 (right)
+  .byte %11110100 ; Row 22 (right)
+  .byte %00000100 ; Row 23 (right)
+  .byte %00000010 ; Row 24 (right)
+
+AlienQueenAttack21
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000000 ; Row 2 (left)
+  .byte %00000010 ; Row 3 (left)
+  .byte %00010100 ; Row 4 (left)
+  .byte %00011111 ; Row 5 (left)
+  .byte %00000011 ; Row 6 (left)
+  .byte %00000000 ; Row 7 (left)
+  .byte %00000011 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00001100 ; Row 10 (left)
+  .byte %00101111 ; Row 11 (left)
+  .byte %00010001 ; Row 12 (left)
+  .byte %00010001 ; Row 13 (left)
+  .byte %00110001 ; Row 14 (left)
+  .byte %01110001 ; Row 15 (left)
+  .byte %01110011 ; Row 16 (left)
+  .byte %00111111 ; Row 17 (left)
+  .byte %00011100 ; Row 18 (left)
+  .byte %00001110 ; Row 19 (left)
+  .byte %00000111 ; Row 20 (left)
+  .byte %00000011 ; Row 21 (left)
+  .byte %00000000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenAttack22
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %10011100 ; Row 6 (right)
+  .byte %11011000 ; Row 7 (right)
+  .byte %10111000 ; Row 8 (right)
+  .byte %11100000 ; Row 9 (right)
+  .byte %11000000 ; Row 10 (right)
+  .byte %10001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %10000001 ; Row 15 (right)
+  .byte %11110001 ; Row 16 (right)
+  .byte %10000001 ; Row 17 (right)
+  .byte %01110001 ; Row 18 (right)
+  .byte %00000001 ; Row 19 (right)
+  .byte %00000001 ; Row 20 (right)
+  .byte %11000010 ; Row 21 (right)
+  .byte %11110010 ; Row 22 (right)
+  .byte %00000010 ; Row 23 (right)
+  .byte %00000010 ; Row 24 (right)
+
+AlienQueenAttack31
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000100 ; Row 2 (left)
+  .byte %00101000 ; Row 3 (left)
+  .byte %00111000 ; Row 4 (left)
+  .byte %00001111 ; Row 5 (left)
+  .byte %00000011 ; Row 6 (left)
+  .byte %00000000 ; Row 7 (left)
+  .byte %00000011 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00000100 ; Row 10 (left)
+  .byte %01001000 ; Row 11 (left)
+  .byte %00101111 ; Row 12 (left)
+  .byte %10100001 ; Row 13 (left)
+  .byte %01100011 ; Row 14 (left)
+  .byte %11110011 ; Row 15 (left)
+  .byte %11111111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %00111000 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000001 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenAttack32
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %10001100 ; Row 6 (right)
+  .byte %11011100 ; Row 7 (right)
+  .byte %10110000 ; Row 8 (right)
+  .byte %11110000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %11001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %00000010 ; Row 15 (right)
+  .byte %11100100 ; Row 16 (right)
+  .byte %10000100 ; Row 17 (right)
+  .byte %01100010 ; Row 18 (right)
+  .byte %00000001 ; Row 19 (right)
+  .byte %00000001 ; Row 20 (right)
+  .byte %00000001 ; Row 21 (right)
+  .byte %11100001 ; Row 22 (right)
+  .byte %00000001 ; Row 23 (right)
+  .byte %00000001 ; Row 24 (right)
+
+AlienQueenAttack41
+  .byte %00000000 ; Row 1 (left)
+  .byte %00100100 ; Row 2 (left)
+  .byte %00011000 ; Row 3 (left)
+  .byte %00011100 ; Row 4 (left)
+  .byte %00000111 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000001 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00000001 ; Row 10 (left)
+  .byte %00100110 ; Row 11 (left)
+  .byte %00010111 ; Row 12 (left)
+  .byte %11010001 ; Row 13 (left)
+  .byte %00110011 ; Row 14 (left)
+  .byte %01110011 ; Row 15 (left)
+  .byte %01111111 ; Row 16 (left)
+  .byte %00111111 ; Row 17 (left)
+  .byte %00011000 ; Row 18 (left)
+  .byte %00001110 ; Row 19 (left)
+  .byte %00000111 ; Row 20 (left)
+  .byte %00000011 ; Row 21 (left)
+  .byte %00000000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenAttack42
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %10001100 ; Row 6 (right)
+  .byte %11011100 ; Row 7 (right)
+  .byte %00110000 ; Row 8 (right)
+  .byte %11110000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %11001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %00000001 ; Row 15 (right)
+  .byte %11100110 ; Row 16 (right)
+  .byte %10001000 ; Row 17 (right)
+  .byte %01101000 ; Row 18 (right)
+  .byte %00000100 ; Row 19 (right)
+  .byte %00000010 ; Row 20 (right)
+  .byte %11000001 ; Row 21 (right)
+  .byte %11110001 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenAttack51
+  .byte %00000000 ; Row 1 (left)
+  .byte %00100100 ; Row 2 (left)
+  .byte %00011000 ; Row 3 (left)
+  .byte %00001100 ; Row 4 (left)
+  .byte %00000111 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000111 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00000001 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00101111 ; Row 12 (left)
+  .byte %00010001 ; Row 13 (left)
+  .byte %01010011 ; Row 14 (left)
+  .byte %00110011 ; Row 15 (left)
+  .byte %01111111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %00111000 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000001 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenAttack52
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %10001100 ; Row 6 (right)
+  .byte %10111000 ; Row 7 (right)
+  .byte %00110000 ; Row 8 (right)
+  .byte %11110000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %11001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %11000001 ; Row 14 (right)
+  .byte %00000010 ; Row 15 (right)
+  .byte %11101100 ; Row 16 (right)
+  .byte %10010000 ; Row 17 (right)
+  .byte %01110000 ; Row 18 (right)
+  .byte %00010000 ; Row 19 (right)
+  .byte %00001110 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %11110000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenAttack61
+  .byte %00000000 ; Row 1 (left)
+  .byte %00100100 ; Row 2 (left)
+  .byte %00011000 ; Row 3 (left)
+  .byte %00001100 ; Row 4 (left)
+  .byte %00000111 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000111 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00000001 ; Row 10 (left)
+  .byte %00001100 ; Row 11 (left)
+  .byte %00001111 ; Row 12 (left)
+  .byte %00100001 ; Row 13 (left)
+  .byte %00010001 ; Row 14 (left)
+  .byte %00110011 ; Row 15 (left)
+  .byte %01110111 ; Row 16 (left)
+  .byte %01111111 ; Row 17 (left)
+  .byte %00111000 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000001 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenAttack62
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %10001100 ; Row 6 (right)
+  .byte %10111000 ; Row 7 (right)
+  .byte %00110000 ; Row 8 (right)
+  .byte %11110000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %11001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %10000001 ; Row 14 (right)
+  .byte %00000001 ; Row 15 (right)
+  .byte %11000111 ; Row 16 (right)
+  .byte %10001100 ; Row 17 (right)
+  .byte %11101000 ; Row 18 (right)
+  .byte %00001000 ; Row 19 (right)
+  .byte %00011100 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %11110000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenAttack71
+  .byte %00000000 ; Row 1 (left)
+  .byte %00100100 ; Row 2 (left)
+  .byte %00011000 ; Row 3 (left)
+  .byte %00001100 ; Row 4 (left)
+  .byte %00000111 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000111 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00000001 ; Row 10 (left)
+  .byte %00010000 ; Row 11 (left)
+  .byte %00011110 ; Row 12 (left)
+  .byte %00011011 ; Row 13 (left)
+  .byte %00000001 ; Row 14 (left)
+  .byte %00010011 ; Row 15 (left)
+  .byte %00110111 ; Row 16 (left)
+  .byte %00111111 ; Row 17 (left)
+  .byte %00111000 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000001 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenAttack72
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %10001100 ; Row 6 (right)
+  .byte %10111000 ; Row 7 (right)
+  .byte %00110000 ; Row 8 (right)
+  .byte %11110000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %11001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %10000001 ; Row 14 (right)
+  .byte %00000001 ; Row 15 (right)
+  .byte %11000001 ; Row 16 (right)
+  .byte %10000011 ; Row 17 (right)
+  .byte %11100100 ; Row 18 (right)
+  .byte %00000100 ; Row 19 (right)
+  .byte %00111110 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %11110000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenAttack81
+  .byte %00000000 ; Row 1 (left)
+  .byte %00100100 ; Row 2 (left)
+  .byte %00011000 ; Row 3 (left)
+  .byte %00001100 ; Row 4 (left)
+  .byte %00000111 ; Row 5 (left)
+  .byte %00000001 ; Row 6 (left)
+  .byte %00000111 ; Row 7 (left)
+  .byte %00000111 ; Row 8 (left)
+  .byte %00000011 ; Row 9 (left)
+  .byte %00000001 ; Row 10 (left)
+  .byte %00010000 ; Row 11 (left)
+  .byte %00100110 ; Row 12 (left)
+  .byte %00111011 ; Row 13 (left)
+  .byte %00000001 ; Row 14 (left)
+  .byte %00000011 ; Row 15 (left)
+  .byte %00110111 ; Row 16 (left)
+  .byte %00111111 ; Row 17 (left)
+  .byte %00111000 ; Row 18 (left)
+  .byte %00011100 ; Row 19 (left)
+  .byte %00001110 ; Row 20 (left)
+  .byte %00000111 ; Row 21 (left)
+  .byte %00000001 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenAttack82
+  .byte %00000000 ; Row 1 (right)
+  .byte %00100100 ; Row 2 (right)
+  .byte %00011000 ; Row 3 (right)
+  .byte %00001000 ; Row 4 (right)
+  .byte %00001100 ; Row 5 (right)
+  .byte %10001100 ; Row 6 (right)
+  .byte %10111000 ; Row 7 (right)
+  .byte %00110000 ; Row 8 (right)
+  .byte %11110000 ; Row 9 (right)
+  .byte %11100000 ; Row 10 (right)
+  .byte %11001100 ; Row 11 (right)
+  .byte %11110010 ; Row 12 (right)
+  .byte %10000001 ; Row 13 (right)
+  .byte %10000001 ; Row 14 (right)
+  .byte %00000001 ; Row 15 (right)
+  .byte %11000001 ; Row 16 (right)
+  .byte %10000001 ; Row 17 (right)
+  .byte %11100001 ; Row 18 (right)
+  .byte %00000001 ; Row 19 (right)
+  .byte %01111111 ; Row 20 (right)
+  .byte %10000000 ; Row 21 (right)
+  .byte %11110000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenAttackSpeed:
+  .byte 5 ; Animation speed
+
+AlienQueenAttackFrames:
+  .byte 8 ; Number of frames
+
+;Block Animation Data:
+AlienQueenBlock11
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000000 ; Row 2 (left)
+  .byte %00000000 ; Row 3 (left)
+  .byte %00000000 ; Row 4 (left)
+  .byte %00000000 ; Row 5 (left)
+  .byte %00000000 ; Row 6 (left)
+  .byte %00000000 ; Row 7 (left)
+  .byte %00000000 ; Row 8 (left)
+  .byte %00000000 ; Row 9 (left)
+  .byte %00000000 ; Row 10 (left)
+  .byte %00000000 ; Row 11 (left)
+  .byte %00000000 ; Row 12 (left)
+  .byte %00000000 ; Row 13 (left)
+  .byte %00000000 ; Row 14 (left)
+  .byte %00000000 ; Row 15 (left)
+  .byte %00000000 ; Row 16 (left)
+  .byte %00000000 ; Row 17 (left)
+  .byte %00000000 ; Row 18 (left)
+  .byte %00000000 ; Row 19 (left)
+  .byte %00000000 ; Row 20 (left)
+  .byte %00000000 ; Row 21 (left)
+  .byte %00000000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenBlock12
+  .byte %00000000 ; Row 1 (right)
+  .byte %00000000 ; Row 2 (right)
+  .byte %00000000 ; Row 3 (right)
+  .byte %00000000 ; Row 4 (right)
+  .byte %00000000 ; Row 5 (right)
+  .byte %00000000 ; Row 6 (right)
+  .byte %00000000 ; Row 7 (right)
+  .byte %00000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %00000000 ; Row 12 (right)
+  .byte %00000000 ; Row 13 (right)
+  .byte %00000000 ; Row 14 (right)
+  .byte %00000000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenBlockSpeed:
+  .byte 30 ; Animation speed
+
+AlienQueenBlockFrames:
+  .byte 1 ; Number of frames
+
+;Knockback Animation Data:
+AlienQueenKnockback11
+  .byte %00000000 ; Row 1 (left)
+  .byte %00000000 ; Row 2 (left)
+  .byte %00000000 ; Row 3 (left)
+  .byte %00000000 ; Row 4 (left)
+  .byte %00000000 ; Row 5 (left)
+  .byte %00000000 ; Row 6 (left)
+  .byte %00000000 ; Row 7 (left)
+  .byte %00000000 ; Row 8 (left)
+  .byte %00000000 ; Row 9 (left)
+  .byte %00000000 ; Row 10 (left)
+  .byte %00000000 ; Row 11 (left)
+  .byte %00000000 ; Row 12 (left)
+  .byte %00000000 ; Row 13 (left)
+  .byte %00000000 ; Row 14 (left)
+  .byte %00000000 ; Row 15 (left)
+  .byte %00000000 ; Row 16 (left)
+  .byte %00000000 ; Row 17 (left)
+  .byte %00000000 ; Row 18 (left)
+  .byte %00000000 ; Row 19 (left)
+  .byte %00000000 ; Row 20 (left)
+  .byte %00000000 ; Row 21 (left)
+  .byte %00000000 ; Row 22 (left)
+  .byte %00000000 ; Row 23 (left)
+  .byte %00000000 ; Row 24 (left)
+
+AlienQueenKnockback12
+  .byte %00000000 ; Row 1 (right)
+  .byte %00000000 ; Row 2 (right)
+  .byte %00000000 ; Row 3 (right)
+  .byte %00000000 ; Row 4 (right)
+  .byte %00000000 ; Row 5 (right)
+  .byte %00000000 ; Row 6 (right)
+  .byte %00000000 ; Row 7 (right)
+  .byte %00000000 ; Row 8 (right)
+  .byte %00000000 ; Row 9 (right)
+  .byte %00000000 ; Row 10 (right)
+  .byte %00000000 ; Row 11 (right)
+  .byte %00000000 ; Row 12 (right)
+  .byte %00000000 ; Row 13 (right)
+  .byte %00000000 ; Row 14 (right)
+  .byte %00000000 ; Row 15 (right)
+  .byte %00000000 ; Row 16 (right)
+  .byte %00000000 ; Row 17 (right)
+  .byte %00000000 ; Row 18 (right)
+  .byte %00000000 ; Row 19 (right)
+  .byte %00000000 ; Row 20 (right)
+  .byte %00000000 ; Row 21 (right)
+  .byte %00000000 ; Row 22 (right)
+  .byte %00000000 ; Row 23 (right)
+  .byte %00000000 ; Row 24 (right)
+
+AlienQueenKnockbackSpeed:
+  .byte 30 ; Animation speed
+
+AlienQueenKnockbackFrames:
+  .byte 1 ; Number of frames
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Epilogue
+
+    org $fffc
+    .word Start	; reset vector
+    .word Start	; BRK vector
+  
