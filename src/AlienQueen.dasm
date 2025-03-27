@@ -112,17 +112,16 @@ SetAlienQueenAnimation subroutine
 
 .setBlockAnimation
 
-    ;TODO
     ldx #0
-    lda #<AlienQueenStanding11
+    lda #<AlienQueenBlock11
     sta spritePtr1,x
     inx
-    lda #>AlienQueenStanding11
+    lda #>AlienQueenBlock11
     sta spritePtr1,x
 
-    lda AlienQueenStandingSpeed
+    lda AlienQueenBlockSpeed
     sta animationTiming1,y
-    lda AlienQueenStandingFrames
+    lda AlienQueenBlockFrames
     sta numAnimationFrames1,y
 
     jmp .doneSettingAnimation

@@ -100,6 +100,7 @@ NextFrame subroutine
     ;switch between p1 and p2
     jsr SetPlayerCounter
 
+    tya
     bne .setP2ControllerMask
     lda #%11110000 ;this mask is used by the MoveJoystick routine to check p1 joystick
     sta controllerMask
@@ -308,8 +309,7 @@ CheckInput subroutine
 .checkButton
     ;are we checking p1 or p2? There is a different register depending on which one.
     tya
-    cmp #01
-    beq .checkP2Button
+    bne .checkP2Button
 
 .checkP1Button
     lda #%10000000 ;Check if the button is pressed on the first controller
