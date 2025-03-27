@@ -1,0 +1,276 @@
+
+DrawAlienQueen subroutine
+    lda counter
+    and %00000001
+    tay
+
+    include "DrawBoss.dasm"
+
+    BANK_SWITCH 0,DoneDrawing
+
+
+
+UpdateAlienQueenAnimation subroutine
+    lda counter
+    and %00000001
+    tay
+
+    include "UpdateAnimation.dasm"
+
+    BANK_SWITCH 0,DoneUpdateAnimation
+
+
+
+SetAlienQueenAnimation subroutine
+    lda counter
+    and %00000001
+    tay
+
+.checkStandingAnimation
+    lda p1State,y
+    cmp StandingState
+    beq .setStandingAnimation
+
+    cmp WalkingState
+    beq .setWalkingAnimation
+
+    cmp BeginAttackState
+    beq .setBeginAttackingAnimation
+
+    cmp AttackingState
+    beq .setAttackAnimation
+
+    cmp BlockingState
+    beq .setBlockAnimation
+
+    ;The last possible state
+    jmp .setKnockbackAnimation
+
+.setStandingAnimation
+    ;set the standing animation
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setWalkingAnimation
+
+    ldx #0
+    lda #<AlienQueenWalk11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenWalk11
+    sta spritePtr1,x
+
+    lda AlienQueenWalkSpeed
+    sta animationTiming1,y
+    lda AlienQueenWalkFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBeginAttackingAnimation
+
+    ldx #0
+    lda #<AlienQueenBeginAttack11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenBeginAttack11
+    sta spritePtr1,x
+
+    lda AlienQueenBeginAttackSpeed
+    sta animationTiming1,y
+    lda AlienQueenBeginAttackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setAttackAnimation
+
+    ldx #0
+    lda #<AlienQueenAttack11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenAttack11
+    sta spritePtr1,x
+
+    lda AlienQueenAttackSpeed
+    sta animationTiming1,y
+    lda AlienQueenAttackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBlockAnimation
+
+    ;TODO
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setKnockbackAnimation
+
+    ;TODO
+    ldx #0
+    lda #<AlienQueenStanding11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenStanding11
+    sta spritePtr1,x
+
+    lda AlienQueenStandingSpeed
+    sta animationTiming1,y
+    lda AlienQueenStandingFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.doneSettingAnimation
+    lda animationTiming1,y
+    lsr
+    sta animationTiming1,y
+    
+    BANK_SWITCH 0,DoneSettingPlayerAnimation
+
+
+
+SetAlienQueenColor
+
+    ldx #00
+    lda #<AlienQueenColor
+    sta spriteColorPtr1,x
+    inx
+    lda #>AlienQueenColor
+    sta spriteColorPtr1,x
+
+    BANK_SWITCH 0,DoneSettingPlayerColor
+
+
+
+SetAlienQueenColorBlood
+    ldx #00
+    lda #<AlienQueenColorBlood
+    sta spriteColorPtr1,x
+    inx
+    lda #>AlienQueenColorBlood
+    sta spriteColorPtr1,x
+
+    BANK_SWITCH 0,DoneSetBloodyColor
+
+
+
+SetAlienQueenColorBlood1
+    ldx #00
+    lda #<AlienQueenColorBlood1
+    sta spriteColorPtr1,x
+    inx
+    lda #>AlienQueenColorBlood1
+    sta spriteColorPtr1,x
+
+    BANK_SWITCH 0,DoneSetBloodyColor1
+
+
+
+AlienQueenColor
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+        .byte #$6A;
+
+AlienQueenColorBlood
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+
+AlienQueenColorBlood1
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+
+
+
+    include "assets/graphics/AlienQueen_sprite.asm"

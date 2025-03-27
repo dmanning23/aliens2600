@@ -4,4 +4,7 @@ bin/
 *.asm.lst
 *.asm.sym
 
+*.dasm.lst
+*.dasm.sym
+
 Thumbs.db

@@ -1,0 +1,82 @@
+UpdateBossAnimation subroutine
+
+    ;don't update the animation if the number of frames is less than 1
+    lda numAnimationFrames1,y     ; Load number of frames
+    cmp #2                     ; Compare with 2
+    bcs .continue               ; Branch if num AnimationFrames >= 2
+    jmp .doneUpdatingAnimation ; Skip if num AnimationFrames <= 1
+
+.continue:
+
+    ;Update the animation time 
+
+    ;Increment the current animation time
+    lda currentAnimationTime1,y
+    clc
+    adc #1
+    sta currentAnimationTime1,y
+
+    ;Check if it is time to increment the frame
+    lda currentAnimationTime1,y ; Load current AnimationTime into accumulator
+    cmp animationTiming1,y ; Compare with animationTiming
+    bcc .doneUpdatingAnimationTime ; Branch if current AnimationTime < animationTiming
+
+    ; If we get here, current AnimationTime >= animationTiming
+    lda #0                     ; Load 0 into accumulator
+    sta currentAnimationTime1,y   ; Reset current AnimationTime to 0
+
+    lda currentAnimationFrame1,y
+    clc
+    adc #1
+    sta currentAnimationFrame1,y  ; Increment the animation frame
+
+.doneUpdatingAnimationTime
+
+    ;Update the animation frame
+
+    lda currentAnimationFrame1,y ; Load current frame into accumulator
+    cmp numAnimationFrames1,y ; Compare with max frames
+    ;beq .doneUpdatingAnimationFrame ; If equal, we're good
+    bcc .doneUpdatingAnimationFrame ; Branch if current AnimationFrame < num AnimationFrames
+
+    ; If we get here, current AnimationFrame >= num AnimationFrames
+    lda #0 ; Load 0 into accumulator
+    sta currentAnimationFrame1,y ; Reset frame back to 0
+
+.doneUpdatingAnimationFrame:
+
+    ;Move the sprite pointer to point to the correct animation frame
+
+    lda currentAnimationFrame1,y  ; Check if frame is 0
+    beq .doneUpdatingSpritePointer                  ; If 0, no adding needed
+
+    ldx currentAnimationFrame1,y ; Use X as our frameCounter
+    
+.addLoop:
+    clc                       ; Clear carry before addition
+    lda spritePtr1           ; Add 52 to pointer
+    adc #48
+    sta spritePtr1
+    lda spritePtr1+1         ; Add carry to high byte
+    adc #0
+    sta spritePtr1+1
+    
+    dex                      ; Decrement frameCounter
+    bne .addLoop             ; Keep going if we're not done
+
+.doneUpdatingSpritePointer
+
+.doneUpdatingAnimation
+
+    ;set up rest of the player sprites
+
+    ;Set the second player sprite
+    ldx #0
+    lda spritePtr1,x        ; Load the low byte value
+    clc                     ; Clear carry before addition
+    adc #24                 ; Add 13 to the value
+    sta spritePtr2,x
+    inx
+    lda spritePtr1,x        ; Load the high byte value
+    adc #0                  ; Add carry if it occurred from low byte addition
+    sta spritePtr2,x

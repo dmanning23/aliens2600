@@ -1,0 +1,68 @@
+;Draw the 192 scanlines
+DrawBoss subroutine
+;Draw ??? lines of nothing
+    ldx #45
+.dontDrawTop
+    sta WSYNC
+    dex
+    bne .dontDrawTop
+
+    lda #0
+    sta Temp
+
+    ldx #144
+.drawPlayers
+
+    sta WSYNC
+    dex
+
+
+
+    ;Draw Player 1
+    lda #23
+    sbc Temp
+    tay ;local coord -> Y
+    lda (spritePtr1),y ;lookup bitmap byte
+    sta GRP0 ;store bitmap
+
+    ;lookup the color
+    lda (spriteColorPtr1),y
+    ;lda ColorFrame0,y
+    sta COLUP0 ;store color
+
+    lda (spritePtr2),y ;lookup bitmap byte
+    sta GRP1 ;store bitmap
+
+    ;lookup color
+    lda (spriteColorPtr1),y
+    sta COLUP1 ;store color
+
+
+
+    sta WSYNC
+    dex
+
+    inc Temp
+
+    ;add 2 wsyncs so this matches up
+    sta WSYNC
+    dex
+    sta WSYNC
+    dex
+    sta WSYNC
+    dex
+    sta WSYNC
+    dex
+
+    bne .drawPlayers
+
+    ;done drawing players
+    lda #0
+    sta GRP0
+    sta GRP1
+    
+    ldx #23
+.dontDrawBottom
+    sta WSYNC
+    dex
+    bne .dontDrawBottom

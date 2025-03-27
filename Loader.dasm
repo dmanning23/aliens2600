@@ -1,0 +1,273 @@
+
+DrawLoader subroutine
+    lda counter
+    and %00000001
+    tay
+    include "DrawBoss.dasm"
+
+    BANK_SWITCH 0,DoneDrawing
+
+
+
+UpdateLoaderAnimation subroutine
+    lda counter
+    and %00000001
+    tay
+
+    include "UpdateAnimation.dasm"
+
+    BANK_SWITCH 0,DoneUpdateAnimation
+
+
+
+SetLoaderAnimation subroutine
+    lda counter
+    and %00000001
+    tay
+
+.checkStandingAnimation
+    lda p1State,y
+    cmp StandingState
+    beq .setStandingAnimation
+
+    cmp WalkingState
+    beq .setWalkingAnimation
+
+    cmp BeginAttackState
+    beq .setBeginAttackingAnimation
+
+    cmp AttackingState
+    beq .setAttackAnimation
+
+    cmp BlockingState
+    beq .setBlockAnimation
+
+    ;The last possible state
+    jmp .setKnockbackAnimation
+
+.setStandingAnimation
+    ;set the standing animation
+    ldx #0
+    lda #<LoaderStand11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderStand11
+    sta spritePtr1,x
+
+    lda LoaderStandSpeed
+    sta animationTiming1,y
+    lda LoaderStandFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setWalkingAnimation
+
+    ldx #0
+    lda #<LoaderWalk11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderWalk11
+    sta spritePtr1,x
+
+    lda LoaderWalkSpeed
+    sta animationTiming1,y
+    lda LoaderWalkFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBeginAttackingAnimation
+
+    ldx #0
+    lda #<LoaderBeginAttack11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderBeginAttack11
+    sta spritePtr1,x
+
+    lda LoaderBeginAttackSpeed
+    sta animationTiming1,y
+    lda LoaderBeginAttackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setAttackAnimation
+
+    ldx #0
+    lda #<LoaderAttack11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderAttack11
+    sta spritePtr1,x
+
+    lda LoaderAttackSpeed
+    sta animationTiming1,y
+    lda LoaderAttackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setBlockAnimation
+
+    ldx #0
+    lda #<LoaderBlock11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderBlock11
+    sta spritePtr1,x
+
+    lda LoaderBlockSpeed
+    sta animationTiming1,y
+    lda LoaderBlockFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setKnockbackAnimation
+
+    ;TODO: knockback animation
+    ldx #0
+    lda #<LoaderWalk11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderWalk11
+    sta spritePtr1,x
+
+    lda LoaderWalkSpeed
+    sta animationTiming1,y
+    lda LoaderWalkFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.doneSettingAnimation
+    lda animationTiming1,y
+    lsr
+    sta animationTiming1,y
+    
+    BANK_SWITCH 0,DoneSettingPlayerAnimation
+
+
+
+SetLoaderColor
+    ldx #00
+    lda #<LoaderColor
+    sta spriteColorPtr1,x
+    inx
+    lda #>LoaderColor
+    sta spriteColorPtr1,x
+
+    BANK_SWITCH 0,DoneSettingPlayerColor
+
+
+
+SetLoaderColorBlood
+    ldx #00
+    lda #<LoaderColorBlood
+    sta spriteColorPtr1,x
+    inx
+    lda #>LoaderColorBlood
+    sta spriteColorPtr1,x
+
+    BANK_SWITCH 0,DoneSetBloodyColor
+
+
+
+SetLoaderColorBlood1
+    ldx #00
+    lda #<LoaderColorBlood1
+    sta spriteColorPtr1,x
+    inx
+    lda #>LoaderColorBlood1
+    sta spriteColorPtr1,x
+
+    BANK_SWITCH 0,DoneSetBloodyColor1
+
+
+
+LoaderColor
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+        .byte #$2A;
+
+LoaderColorBlood
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+        .byte #$40;
+
+LoaderColorBlood1
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+        .byte #$1C;
+
+
+
+    include "assets/graphics/Loader_sprite.asm"
