@@ -3,6 +3,7 @@ DrawLoader subroutine
     lda counter
     and %00000001
     tay
+    
     include "DrawBoss.dasm"
 
     BANK_SWITCH 0,DoneDrawing

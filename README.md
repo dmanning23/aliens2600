@@ -45,4 +45,4 @@ Player 2 (Xenomorph):
 | Button | ??? |
 | Power Switch | How can they cut the power, man? They're animals! |
 
-[![Play Xenomorphs in your browser](Screenshot.png)](https://javatari.org?ROM=https://github.com/dmanning23/aliens2600/releases/download/v0.3/Aliens2600.bin)
+[![Play Xenomorphs in your browser](assets/images/Screenshot.png)](https://javatari.org?ROM=https://github.com/dmanning23/aliens2600/releases/download/v0.3/Aliens2600.bin)
