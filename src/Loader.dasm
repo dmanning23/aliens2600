@@ -128,17 +128,16 @@ SetLoaderAnimation subroutine
 
 .setKnockbackAnimation
 
-    ;TODO: knockback animation
     ldx #0
-    lda #<LoaderWalk11
+    lda #<LoaderKnockback11
     sta spritePtr1,x
     inx
-    lda #>LoaderWalk11
+    lda #>LoaderKnockback11
     sta spritePtr1,x
 
-    lda LoaderWalkSpeed
+    lda LoaderKnockbackSpeed
     sta animationTiming1,y
-    lda LoaderWalkFrames
+    lda LoaderKnockbackFrames
     sta numAnimationFrames1,y
 
     jmp .doneSettingAnimation
