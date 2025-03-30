@@ -428,7 +428,7 @@ UpdateAlienInput subroutine
     bne .doneUpdatePlayer
 
     ;set the player state
-    lda StandingState
+    lda #STANDING_STATE
     sta PlayerState1,y
 
 .doneUpdatePlayer
@@ -641,7 +641,7 @@ UpdateMarineInput subroutine
     bne .doneUpdatePlayer
 
     ;set the player state
-    lda StandingState
+    lda #STANDING_STATE
     sta PlayerState1,y
 
 .doneUpdatePlayer
@@ -1075,7 +1075,7 @@ DrawAlien subroutine
     txa		; X -> A
     sec		; set carry for subtract
     sbc Temp	; local coordinate
-    cmp #AlienHeight ; in sprite?
+    cmp #ALIEN_HEIGHT ; in sprite?
     bcc .InSprite	; yes, skip over next
     lda #0		; not in sprite, load 0
 .InSprite
@@ -1134,7 +1134,7 @@ UpdateAlienSprite subroutine
     cmp WalkingState
     beq .updateWalkingSprite
 
-    cmp StandingState
+    cmp #STANDING_STATE
     beq .jumpUpdateStandingSprite
 
     cmp StunnedState
@@ -1597,7 +1597,7 @@ DrawMarine subroutine
     txa		; X -> A
     sec		; set carry for subtract
     sbc Temp	; local coordinate
-    cmp #MarineHeight ; in sprite?
+    cmp #MARINE_HEIGHT ; in sprite?
     bcc .InSprite	; yes, skip over next
     lda #0		; not in sprite, load 0
 .InSprite

@@ -28,7 +28,7 @@ SetAlienQueenAnimation subroutine
 
 .checkStandingAnimation
     lda p1State,y
-    cmp StandingState
+    cmp #STANDING_STATE
     beq .setStandingAnimation
 
     cmp WalkingState

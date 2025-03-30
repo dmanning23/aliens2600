@@ -1,20 +1,47 @@
-AlienHeight	equ 16*2
-MarineHeight equ 16*2
-
+ALIEN_HEIGHT	equ 16*2
+MARINE_HEIGHT equ 16*2
 
 ;The states are:
-StandingState       equ #00
-WalkingState        equ #01
-ShootingState       equ #02
-StunnedState        equ #03
-DeathState          equ #04
-DeadState           equ #05
+STANDING_STATE equ #00
+WalkingState equ #01
+ShootingState equ #02
+StunnedState equ #03
+DeathState equ #04
+DeadState equ #05
 
 ;used in final battle:
-BeginAttackState    equ #06
-AttackingState      equ #07
+BeginAttackState equ #06
+AttackingState equ #07
 BlockingState equ #8
-KnockbackState      equ #9
+KnockbackState equ #9
+
+;The input flags are as follows:
+controllerDown      equ #%00000001
+controllerUp        equ #%00000010
+controllerLeft      equ #%00000100
+controllerRight     equ #%00001000
+controllerButton    equ #%00010000
+
+;The input flags are as follows:
+controllerDown      equ #%00000001
+controllerUp        equ #%00000010
+controllerLeft      equ #%00000100
+controllerRight     equ #%00001000
+controllerButton    equ #%00010000
+
+;These are the timers for the various states
+BeginAttackTime	equ #12 
+AttackTime equ #15
+BlockTime equ #18
+KnockbackTime equ #40
+
+BloodTime equ #%00010000
+WalkTime equ #%00001000
+
+;the borders of the screen
+LeftSide equ #16
+RightSide equ #128
+
 
 
 ;The player's X,Y position on the screen
@@ -22,10 +49,10 @@ KnockbackState      equ #9
 ;vert range: 0 - 164
 ;horiz range: 0 - 156
 ;TODO: clean up playfield range magic numbers
-XPos1       .byte
-XPos2       .byte
-YPos1       .byte
-YPos2       .byte
+XPos1 .byte
+XPos2 .byte
+YPos1 .byte
+YPos2 .byte
 
 ;Which direction the player is facing
 ;0 = Left
@@ -75,13 +102,6 @@ p2PrevInput byte
 p1Input byte
 p2Input byte
 
-;The input flags are as follows:
-controllerDown		equ #%00000001
-controllerUp		equ #%00000010
-controllerLeft		equ #%00000100
-controllerRight		equ #%00001000
-controllerButton	equ #%00010000
-
 AlienHealth .byte
 
 counter .byte
@@ -90,21 +110,8 @@ counter .byte
 Temp .byte
 
 ; indexes for sound effect driver    
-SFX_LEFT:       ds 1    ; stored in $B1
-SFX_RIGHT:      ds 1    ; stored in $B2
-
-
-
-
-
-
-
-
-
-
-
-
-
+SFX_LEFT: ds 1    ; stored in $B1
+SFX_RIGHT: ds 1    ; stored in $B2
 
 ;Whether or not the game is over
 ;0 game is not over
@@ -121,27 +128,3 @@ p2State byte
 ;The character timer, used to time various state actions
 p1Timer byte
 p2Timer byte
-
-
-
-;The input flags are as follows:
-controllerDown		equ #%00000001
-controllerUp		equ #%00000010
-controllerLeft		equ #%00000100
-controllerRight		equ #%00001000
-controllerButton	equ #%00010000
-
-
-
-;These are the timers for the various states
-BeginAttackTime	equ #12 
-AttackTime      equ #15
-BlockTime       equ #18
-KnockbackTime   equ #40
-
-BloodTime equ #%00010000
-WalkTime equ #%00001000
-
-;the borders of the screen
-LeftSide equ #16
-RightSide equ #128

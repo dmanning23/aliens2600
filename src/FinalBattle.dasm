@@ -371,7 +371,7 @@ MovePlayer
 .changePlayerToWalking
     ;is the player standing?
     lda p1State,y
-    cmp StandingState
+    cmp #STANDING_STATE
     bne .doneMovingPlayer
 
     ;Set the player's state to walking
@@ -387,7 +387,7 @@ MovePlayer
     jmp .doneMovingPlayer
 
 .changePlayerToStanding
-    lda StandingState
+    lda #STANDING_STATE
     sta p1State,y
 
 .doneMovingPlayer
@@ -461,7 +461,7 @@ CharacterUpdate subroutine
 .checkStanding  
     ;Check if the player is standing
     lda p1State,y
-    cmp StandingState
+    cmp #STANDING_STATE
     beq .checkStandingWalkingInput
 
     ;Check if the player is walking
@@ -540,7 +540,7 @@ CharacterUpdate subroutine
     beq .doneCheckingUpPress
 
     ;The player cancelled, change the state to standing
-    lda StandingState
+    lda #STANDING_STATE
     sta p1State,y
 
     jmp .doneUpdatingPlayerState
@@ -576,7 +576,7 @@ CharacterUpdate subroutine
     bne .doneUpdatingPlayerState
 
     ;Change to the standing state
-    lda StandingState
+    lda #STANDING_STATE
     sta p1State,y
 
     jmp .doneUpdatingPlayerState
@@ -593,7 +593,7 @@ CharacterUpdate subroutine
     bne .doneUpdatingPlayerState
 
     ;Change to the standing state
-    lda StandingState
+    lda #STANDING_STATE
     sta p1State,y
 
     jmp .doneUpdatingPlayerState
@@ -636,7 +636,7 @@ CharacterUpdate subroutine
     bne .doneUpdatingPlayerState
 
     ;Change to the standing state
-    lda StandingState
+    lda #STANDING_STATE
     sta p1State,y
 
     jmp .doneUpdatingPlayerState
