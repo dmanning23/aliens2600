@@ -376,7 +376,7 @@ MovePlayer
     bne .doneMovingPlayer
 
     ;Set the player's state to walking
-    lda #WalkingState
+    lda #WALKING_STATE
     sta p1State,y
 
     jsr RestartAnimation
@@ -464,7 +464,7 @@ CharacterUpdate subroutine
     beq .checkStandingWalkingInput
 
     ;Check if the player is walking
-    cmp #WalkingState
+    cmp #WALKING_STATE
     bne .checkBeginAttacking
 
 .checkStandingWalkingInput
@@ -479,7 +479,7 @@ CharacterUpdate subroutine
     beq .doneCheckingButtonPress
 
     ;change the state to "begin attacking"
-    lda BeginAttackState
+    lda #BeginAttackState
     sta p1State,y
 
     jsr RestartAnimation
@@ -524,7 +524,7 @@ CharacterUpdate subroutine
 .checkBeginAttacking
 
     lda p1State,y
-    cmp BeginAttackState
+    cmp #BeginAttackState
     bne .checkAttacking
 
     ;check if the "up" direction was pressed
@@ -796,7 +796,7 @@ UpdateGameLogic subroutine
     jmp .setDoubleBounce
 
 .checkP2BeginAttacking
-    cmp BeginAttackState
+    cmp #BeginAttackState
     bne .killP2
 
     ;Both players are attacking, bounce them both
@@ -824,7 +824,7 @@ UpdateGameLogic subroutine
 
 .checkP1BeginAttacking
     ;is p1 begin attacking
-    cmp BeginAttackState
+    cmp #BeginAttackState
     bne .killP1
 
     ;Both players are attacking, bounce them both

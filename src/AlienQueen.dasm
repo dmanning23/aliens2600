@@ -31,10 +31,10 @@ SetAlienQueenAnimation subroutine
     cmp #STANDING_STATE
     beq .setStandingAnimation
 
-    cmp #WalkingState
+    cmp #WALKING_STATE
     beq .setWalkingAnimation
 
-    cmp BeginAttackState
+    cmp #BeginAttackState
     beq .setBeginAttackingAnimation
 
     cmp AttackingState

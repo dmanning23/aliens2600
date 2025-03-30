@@ -296,7 +296,7 @@ UpdateAlienInput subroutine
 
     ;is the alien getting shot?
     lda PlayerState1,y
-    cmp StunnedState
+    cmp #STUNNED_STATE
     bne .checkHoldingRight
 
     ;check if the player is done being stunned
@@ -324,7 +324,7 @@ UpdateAlienInput subroutine
     ;if they are:
 
     ;set the player state
-    lda #WalkingState
+    lda #WALKING_STATE
     sta PlayerState1,y
 
     ;set this var so the player is not set to standing unecessarily
@@ -354,7 +354,7 @@ UpdateAlienInput subroutine
     ;if they are:
 
     ;set the player state
-    lda #WalkingState
+    lda #WALKING_STATE
     sta PlayerState1,y
     
     lda #1
@@ -383,7 +383,7 @@ UpdateAlienInput subroutine
     ;if they are:
 
     ;set the player state
-    lda #WalkingState
+    lda #WALKING_STATE
     sta PlayerState1,y
     
     lda #1
@@ -408,7 +408,7 @@ UpdateAlienInput subroutine
     ;if they are:
 
     ;set the player state
-    lda #WalkingState
+    lda #WALKING_STATE
     sta PlayerState1,y
     
     lda #1
@@ -482,7 +482,7 @@ UpdateMarineInput subroutine
 
 .checkPlayerShooting
     lda PlayerState1
-    cmp #ShootingState
+    cmp #SHOOTING_STATE
     bne .checkButtonInput
 
     ;use player timer to time shots instead of alien
@@ -496,7 +496,7 @@ UpdateMarineInput subroutine
     bmi .checkHoldRight
 
     ;set the player to shooting
-    lda #ShootingState
+    lda #SHOOTING_STATE
     sta PlayerState1,y
 
     ;start the player timer
@@ -538,7 +538,7 @@ UpdateMarineInput subroutine
     ;if they are:
 
     ;set the player state
-    lda #WalkingState
+    lda #WALKING_STATE
     sta PlayerState1,y
 
     lda #1
@@ -567,7 +567,7 @@ UpdateMarineInput subroutine
     ;if they are:
 
     ;set the player state
-    lda #WalkingState
+    lda #WALKING_STATE
     sta PlayerState1,y
 
     lda #1
@@ -596,7 +596,7 @@ UpdateMarineInput subroutine
     ;if they are:
 
     ;set the player state
-    lda #WalkingState
+    lda #WALKING_STATE
     sta PlayerState1,y
     
     lda #1
@@ -621,7 +621,7 @@ UpdateMarineInput subroutine
     ;if they are:
 
     ;set the player statey
-    lda #WalkingState
+    lda #WALKING_STATE
     sta PlayerState1,y
     
     lda #1
@@ -659,7 +659,7 @@ AlienGotShot subroutine
     cmp DeadState
     beq .doneUpdateAlienHealth ;dont update if the alien is dead
 
-    cmp StunnedState
+    cmp #STUNNED_STATE
     beq .doneUpdateAlienHealth ;dont update if the alien is already stunned
 
     ;the alien takes a hit
@@ -676,7 +676,7 @@ AlienGotShot subroutine
     jsr SFX_TRIGGER
     jsr SetCharacter
 
-    lda StunnedState
+    lda #STUNNED_STATE
     sta PlayerState2
 
     lda #30 ;load 30 into the state timer to count down the stun time
@@ -1131,13 +1131,13 @@ UpdateAlienSprite subroutine
 
     ;Check which state the player is in
     lda PlayerState1,y
-    cmp #WalkingState
+    cmp #WALKING_STATE
     beq .updateWalkingSprite
 
     cmp #STANDING_STATE
     beq .jumpUpdateStandingSprite
 
-    cmp StunnedState
+    cmp #STUNNED_STATE
     beq .jumpStunnedSprite
 
     jmp .updateDeathSprite
@@ -1654,10 +1654,10 @@ UpdateMarineSprite subroutine
 
     ;Check which state the player is in
     lda PlayerState1,y
-    cmp #WalkingState
+    cmp #WALKING_STATE
     beq .updateWalkingSprite
 
-    cmp #ShootingState
+    cmp #SHOOTING_STATE
     beq .updateShootingSprite
 
     cmp DeathState
