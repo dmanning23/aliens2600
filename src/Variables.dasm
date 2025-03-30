@@ -35,6 +35,7 @@ WalkTime equ #%00001000
 LeftSide equ #16
 RightSide equ #128
 
+ATTACK_DISTANCE equ #17
 
 
 ;The player's X,Y position on the screen

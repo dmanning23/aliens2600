@@ -347,7 +347,7 @@ MovePlayer
     beq .checkMoveRight
 
     ;Dont walk off the left side of teh screen
-    cpx LeftSide
+    cpx #LeftSide
     bcc .checkMoveRight
 
     ;Move left
@@ -363,7 +363,7 @@ MovePlayer
     beq .changePlayerToStanding
 
     ;Dont walk off the right side of teh screen
-    cpx #128
+    cpx #RightSide
     bcs .changePlayerToStanding
 
     ;move right!
@@ -429,7 +429,6 @@ CharacterUpdate subroutine
 .toggleBloodyColor
     ;which player?
     tya
-    cmp #00
     beq .toggleP1Bloody
 
     ldx #02
@@ -444,7 +443,6 @@ CharacterUpdate subroutine
 .toggleBloodyColor1
     ;which player?
     tya
-    cmp #00
     beq .toggleP1Bloody1
 
     ldx #02
@@ -549,7 +547,6 @@ CharacterUpdate subroutine
 
     ;check if the timer is done
     lda p1Timer,y
-    cmp #00
     bne .doneUpdatingPlayerState
 
     ;Change state to attacking
@@ -572,7 +569,6 @@ CharacterUpdate subroutine
 
     ;check if the timer is done
     lda p1Timer,y
-    cmp #00
     bne .doneUpdatingPlayerState
 
     ;Change to the standing state
@@ -589,7 +585,6 @@ CharacterUpdate subroutine
 
     ;check if the timer is done
     lda p1Timer,y
-    cmp #00
     bne .doneUpdatingPlayerState
 
     ;Change to the standing state
@@ -607,11 +602,11 @@ CharacterUpdate subroutine
     ;Scoot the player backwards while they are in knockback state
     ldx XPos1,y ;load the player's position so we can check to not kncok them off screen
     tya
-    cmp #00 ;check which player is being knocked back
+    ;check which player is being knocked back
     bne .scootBackPlayer2
 
     ;scoot back player 1
-    cpx LeftSide
+    cpx #LeftSide
     bcc .doneScootingBack
 
     ;Move left
@@ -622,7 +617,7 @@ CharacterUpdate subroutine
 .scootBackPlayer2
 
     ;scoot back player 2
-    cpx #128
+    cpx #RightSide
     bcs .doneScootingBack
 
     ;move right!
@@ -632,7 +627,6 @@ CharacterUpdate subroutine
 .doneScootingBack
     ;check if the timer is done
     lda p1Timer,y
-    cmp #00
     bne .doneUpdatingPlayerState
 
     ;Change to the standing state
@@ -767,14 +761,14 @@ UpdateGameLogic subroutine
 .XPos1GreaterOrEqual:
     lda XPos1
     sbc XPos2     ; Subtract XPos2 from the accumulator
-    cmp #17       ; Compare the result with 64
+    cmp #ATTACK_DISTANCE       ; Compare the result with 64
     bcc .closeEnough  ; If result is less than 64, branch to LessThan
     jmp .doneUpdatingGameLogic      ; Jump to Done if result is greater or equal to 64
 
 .XPos2Greater:
     lda XPos2
     sbc XPos1
-    cmp #17
+    cmp #ATTACK_DISTANCE
     bcc .closeEnough
     jmp .doneUpdatingGameLogic
 
