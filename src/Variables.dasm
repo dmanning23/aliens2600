@@ -6,14 +6,14 @@ STANDING_STATE equ #00
 WALKING_STATE equ #01
 SHOOTING_STATE equ #02
 STUNNED_STATE equ #03
-DeathState equ #04
-DeadState equ #05
+DEATH_STATE equ #04
+DEAD_STATE equ #05
 
 ;used in final battle:
-BeginAttackState equ #06
-AttackingState equ #07
-BlockingState equ #8
-KnockbackState equ #9
+BEGIN_ATTACK_STATE equ #06
+ATTACKING_STATE equ #07
+BLOCKING_STATE equ #8
+KNOCKBACK_STATE equ #9
 
 ;The input flags are as follows:
 CONTROLLER_DOWN      equ #%00000001

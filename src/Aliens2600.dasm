@@ -287,7 +287,7 @@ UpdateAlienInput subroutine
     bne .gotoDoneUpdatePlayer
 
     ;hey if it gets here the player is done dying
-    lda DeadState
+    lda #DEAD_STATE
     sta PlayerState2
 
     jmp .doneUpdatePlayer
@@ -460,7 +460,7 @@ UpdateMarineInput subroutine
 .checkPlayerDeath
 
     lda PlayerState1
-    cmp DeathState
+    cmp #DEATH_STATE
     bne .checkPlayerDead
 
     ;check if the player is done dying
@@ -468,14 +468,14 @@ UpdateMarineInput subroutine
     bne .gotoDoneUpdatePlayer
 
     ;hey if it gets here the player is done dying
-    lda DeadState
+    lda #DEAD_STATE
     sta PlayerState1
 
     jmp .doneUpdatePlayer
 
 .checkPlayerDead
     lda PlayerState1
-    cmp DeadState
+    cmp #DEAD_STATE
     beq .gotoDoneUpdatePlayer
 
     jmp .checkPlayerShooting
@@ -653,10 +653,10 @@ UpdateMarineInput subroutine
 AlienGotShot subroutine
     ;update the alien health?
     lda PlayerState2
-    cmp DeathState
+    cmp #DEATH_STATE
     beq .doneUpdateAlienHealth ;dont update if the alien is dead
 
-    cmp DeadState
+    cmp #DEAD_STATE
     beq .doneUpdateAlienHealth ;dont update if the alien is dead
 
     cmp #STUNNED_STATE
@@ -696,7 +696,7 @@ AlienGotShot subroutine
     jsr SFX_TRIGGER
     jsr SetCharacter
 
-    lda DeathState
+    lda #DEATH_STATE
     sta PlayerState2
 
     lda #95 ;load 60 into the state timer to count down the dying animation
@@ -714,10 +714,10 @@ AlienGotShot subroutine
 PlayerAlienCollisionLogic subroutine
     ;check if the alien is dead
     lda PlayerState2
-    cmp DeadState
+    cmp #DEAD_STATE
     beq .dontKillPlayer
 
-    cmp DeathState
+    cmp #DEATH_STATE
     beq .dontKillPlayer
 
     ;Check if the characters are colliding
@@ -769,14 +769,14 @@ CheckCharCollision subroutine
 KillPlayer subroutine
     ;is the player already dead
     lda PlayerState1
-    cmp DeadState
+    cmp #DEAD_STATE
     beq .alreadyDead
 
-    cmp DeathState
+    cmp #DEATH_STATE
     beq .alreadyDead
 
     ;set the player to dying
-    lda DeathState
+    lda #DEATH_STATE
     sta PlayerState1
 
     lda #238 ;load 60 into the state timer to count down the dying animation
@@ -1059,7 +1059,7 @@ DrawAlien subroutine
 
     ;is the alien dead?
     lda PlayerState2
-    cmp DeadState
+    cmp #DEAD_STATE
     beq .dontDrawingAlien
 
     lda counter
@@ -1581,7 +1581,7 @@ DrawMarine subroutine
 
     ;is the marin dead?
     lda PlayerState1
-    cmp DeadState
+    cmp #DEAD_STATE
     beq .dontDrawingMarine
 
     lda counter
@@ -1660,7 +1660,7 @@ UpdateMarineSprite subroutine
     cmp #SHOOTING_STATE
     beq .updateShootingSprite
 
-    cmp DeathState
+    cmp #DEATH_STATE
     beq .updateDeathSprite
 
     jmp .updateStandingSprite

@@ -414,7 +414,7 @@ CharacterUpdate subroutine
 
     ;check if the player is dead
     lda p1State,y
-    cmp DeadState
+    cmp #DEAD_STATE
     bne .jumpToDoneUpdatingPlayerState
 
     ;Toggle the color to the blood if required
@@ -479,7 +479,7 @@ CharacterUpdate subroutine
     beq .doneCheckingButtonPress
 
     ;change the state to "begin attacking"
-    lda #BeginAttackState
+    lda #BEGIN_ATTACK_STATE
     sta p1State,y
 
     jsr RestartAnimation
@@ -503,7 +503,7 @@ CharacterUpdate subroutine
     beq .doneCheckingDownPress
 
     ;change the state to blocking
-    lda BlockingState
+    lda #BLOCKING_STATE
     sta p1State,y
 
     jsr RestartAnimation
@@ -524,7 +524,7 @@ CharacterUpdate subroutine
 .checkBeginAttacking
 
     lda p1State,y
-    cmp #BeginAttackState
+    cmp #BEGIN_ATTACK_STATE
     bne .checkAttacking
 
     ;check if the "up" direction was pressed
@@ -550,7 +550,7 @@ CharacterUpdate subroutine
     bne .doneUpdatingPlayerState
 
     ;Change state to attacking
-    lda AttackingState
+    lda #ATTACKING_STATE
     sta p1State,y
 
     jsr RestartAnimation
@@ -564,7 +564,7 @@ CharacterUpdate subroutine
 .checkAttacking
 
     lda p1State,y
-    cmp AttackingState
+    cmp #ATTACKING_STATE
     bne .checkBlocking
 
     ;check if the timer is done
@@ -580,7 +580,7 @@ CharacterUpdate subroutine
 .checkBlocking
 
     lda p1State,y
-    cmp BlockingState
+    cmp #BLOCKING_STATE
     bne .checkKnockback
 
     ;check if the timer is done
@@ -596,7 +596,7 @@ CharacterUpdate subroutine
 .checkKnockback
 
     lda p1State,y
-    cmp KnockbackState
+    cmp #KNOCKBACK_STATE
     bne .doneUpdatingPlayerState
 
     ;Scoot the player backwards while they are in knockback state
@@ -775,12 +775,12 @@ UpdateGameLogic subroutine
 .closeEnough
     ;is p1 attacking
     lda p1State
-    cmp AttackingState
+    cmp #ATTACKING_STATE
     bne .checkPlayer2GameLogic
 
     ;is p2 blocking
     lda p2State
-    cmp BlockingState
+    cmp #BLOCKING_STATE
     bne .checkP2Attacking
 
     ;Player 1 has been bounced back
@@ -789,14 +789,14 @@ UpdateGameLogic subroutine
 
 .checkP2Attacking
     ;is p2 attacking or begin attacking
-    cmp AttackingState
+    cmp #ATTACKING_STATE
     bne .checkP2BeginAttacking
 
     ;Both players are attacking, bounce them both
     jmp .setDoubleBounce
 
 .checkP2BeginAttacking
-    cmp #BeginAttackState
+    cmp #BEGIN_ATTACK_STATE
     bne .killP2
 
     ;Both players are attacking, bounce them both
@@ -810,12 +810,12 @@ UpdateGameLogic subroutine
 .checkPlayer2GameLogic
     ;is p2 attacking
     lda p2State
-    cmp AttackingState
+    cmp #ATTACKING_STATE
     bne .doneUpdatingGameLogic
 
     ;is p1 blocking
     lda p1State
-    cmp BlockingState
+    cmp #BLOCKING_STATE
     bne .checkP1BeginAttacking
 
     ;Player 2 has been bounced back
@@ -824,7 +824,7 @@ UpdateGameLogic subroutine
 
 .checkP1BeginAttacking
     ;is p1 begin attacking
-    cmp #BeginAttackState
+    cmp #BEGIN_ATTACK_STATE
     bne .killP1
 
     ;Both players are attacking, bounce them both
@@ -845,7 +845,7 @@ UpdateGameLogic subroutine
     sta gameOverTimer
 
     ;set the player to dead
-    lda DeadState
+    lda #DEAD_STATE
     sta p1State,y
 
     ;set the players timer
@@ -855,7 +855,7 @@ UpdateGameLogic subroutine
 
 .bouncePlayer
     ;Set the player to being knocked back
-    lda KnockbackState
+    lda #KNOCKBACK_STATE
     sta p1State,y
 
     jsr RestartAnimation

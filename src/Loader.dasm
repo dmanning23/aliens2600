@@ -34,13 +34,13 @@ SetLoaderAnimation subroutine
     cmp #WALKING_STATE
     beq .setWalkingAnimation
 
-    cmp #BeginAttackState
+    cmp #BEGIN_ATTACK_STATE
     beq .setBeginAttackingAnimation
 
-    cmp #AttackingState
+    cmp #ATTACKING_STATE
     beq .setAttackAnimation
 
-    cmp #BlockingState
+    cmp #BLOCKING_STATE
     beq .setBlockAnimation
 
     ;The last possible state
