@@ -16,11 +16,11 @@ BlockingState equ #8
 KnockbackState equ #9
 
 ;The input flags are as follows:
-controllerDown      equ #%00000001
-controllerUp        equ #%00000010
-controllerLeft      equ #%00000100
-controllerRight     equ #%00001000
-controllerButton    equ #%00010000
+CONTROLLER_DOWN      equ #%00000001
+CONTROLLER_UP        equ #%00000010
+CONTROLLER_LEFT      equ #%00000100
+CONTROLLER_RIGHT     equ #%00001000
+CONTROLLER_BUTTON    equ #%00010000
 
 ;These are the timers for the various states
 BEGIN_ATTACK_TIME equ #12 

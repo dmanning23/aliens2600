@@ -267,7 +267,7 @@ CheckInput subroutine
 
     ;set the down flag for the current input
     lda p1Input,y
-    ora controllerDown
+    ora #CONTROLLER_DOWN
     sta p1Input,y
 
 .checkUp
@@ -279,7 +279,7 @@ CheckInput subroutine
 
     ;set the up flag for teh current input
     lda p1Input,y
-    ora controllerUp
+    ora #CONTROLLER_UP
     sta p1Input,y
 
 .checkLeft
@@ -291,7 +291,7 @@ CheckInput subroutine
 
     ;set the "left" flag for teh current input
     lda p1Input,y
-    ora controllerLeft
+    ora #CONTROLLER_LEFT
     sta p1Input,y
 
 .checkRight
@@ -303,7 +303,7 @@ CheckInput subroutine
 
     ;set the "right" flag for teh current input
     lda p1Input,y
-    ora controllerRight
+    ora #CONTROLLER_RIGHT
     sta p1Input,y
 
 .checkButton
@@ -326,7 +326,7 @@ CheckInput subroutine
 .setButtonFlag
     ;set the "button" flag for teh current input
     lda p1Input,y
-    ora controllerButton
+    ora #CONTROLLER_BUTTON
     sta p1Input,y
 
 .doneCheckingInput
@@ -343,7 +343,7 @@ MovePlayer
     lda p1Input,y
 
     ;Check if the left direction is being held down
-    bit controllerLeft
+    and #CONTROLLER_LEFT
     beq .checkMoveRight
 
     ;Dont walk off the left side of teh screen
@@ -358,7 +358,8 @@ MovePlayer
 
 .checkMoveRight
     ;Check if the "right" direction is being held down
-    bit controllerRight
+    lda p1Input,y
+    and #CONTROLLER_RIGHT
     beq .changePlayerToStanding
 
     ;Dont walk off the right side of teh screen
@@ -471,12 +472,12 @@ CharacterUpdate subroutine
 .checkStandingWalkingInput
     ;check for the button press
     lda p1Input,y ;is the button currently held?
-    bit controllerButton
+    and #CONTROLLER_BUTTON
     beq .doneCheckingButtonPress
 
     ;The down direction is currently being held, but is it a new input?
     eor p1PrevInput,y
-    bit controllerButton
+    and #CONTROLLER_BUTTON
     beq .doneCheckingButtonPress
 
     ;change the state to "begin attacking"
@@ -495,12 +496,12 @@ CharacterUpdate subroutine
 
     ;check for down press
     lda p1Input,y ;is the down direction currently held?
-    bit controllerDown
+    and #CONTROLLER_DOWN
     beq .doneCheckingDownPress
 
     ;The down direction is currently being held, but is it a new input?
     eor p1PrevInput,y
-    bit controllerDown
+    and #CONTROLLER_DOWN
     beq .doneCheckingDownPress
 
     ;change the state to blocking
@@ -530,12 +531,12 @@ CharacterUpdate subroutine
 
     ;check if the "up" direction was pressed
     lda p1Input,y ;is the up direction currently held?
-    bit controllerUp
+    and #CONTROLLER_UP
     beq .doneCheckingUpPress
 
     ;The up direction is currently being held, but is it a new input?
     eor p1PrevInput,y
-    bit controllerUp
+    and #CONTROLLER_UP
     beq .doneCheckingUpPress
 
     ;The player cancelled, change the state to standing
