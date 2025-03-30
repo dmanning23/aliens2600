@@ -324,7 +324,7 @@ UpdateAlienInput subroutine
     ;if they are:
 
     ;set the player state
-    lda WalkingState
+    lda #WalkingState
     sta PlayerState1,y
 
     ;set this var so the player is not set to standing unecessarily
@@ -354,7 +354,7 @@ UpdateAlienInput subroutine
     ;if they are:
 
     ;set the player state
-    lda WalkingState
+    lda #WalkingState
     sta PlayerState1,y
     
     lda #1
@@ -383,7 +383,7 @@ UpdateAlienInput subroutine
     ;if they are:
 
     ;set the player state
-    lda WalkingState
+    lda #WalkingState
     sta PlayerState1,y
     
     lda #1
@@ -408,7 +408,7 @@ UpdateAlienInput subroutine
     ;if they are:
 
     ;set the player state
-    lda WalkingState
+    lda #WalkingState
     sta PlayerState1,y
     
     lda #1
@@ -482,7 +482,7 @@ UpdateMarineInput subroutine
 
 .checkPlayerShooting
     lda PlayerState1
-    cmp ShootingState
+    cmp #ShootingState
     bne .checkButtonInput
 
     ;use player timer to time shots instead of alien
@@ -496,7 +496,7 @@ UpdateMarineInput subroutine
     bmi .checkHoldRight
 
     ;set the player to shooting
-    lda ShootingState
+    lda #ShootingState
     sta PlayerState1,y
 
     ;start the player timer
@@ -538,7 +538,7 @@ UpdateMarineInput subroutine
     ;if they are:
 
     ;set the player state
-    lda WalkingState
+    lda #WalkingState
     sta PlayerState1,y
 
     lda #1
@@ -567,7 +567,7 @@ UpdateMarineInput subroutine
     ;if they are:
 
     ;set the player state
-    lda WalkingState
+    lda #WalkingState
     sta PlayerState1,y
 
     lda #1
@@ -596,7 +596,7 @@ UpdateMarineInput subroutine
     ;if they are:
 
     ;set the player state
-    lda WalkingState
+    lda #WalkingState
     sta PlayerState1,y
     
     lda #1
@@ -621,7 +621,7 @@ UpdateMarineInput subroutine
     ;if they are:
 
     ;set the player statey
-    lda WalkingState
+    lda #WalkingState
     sta PlayerState1,y
     
     lda #1
@@ -1131,7 +1131,7 @@ UpdateAlienSprite subroutine
 
     ;Check which state the player is in
     lda PlayerState1,y
-    cmp WalkingState
+    cmp #WalkingState
     beq .updateWalkingSprite
 
     cmp #STANDING_STATE
@@ -1654,10 +1654,10 @@ UpdateMarineSprite subroutine
 
     ;Check which state the player is in
     lda PlayerState1,y
-    cmp WalkingState
+    cmp #WalkingState
     beq .updateWalkingSprite
 
-    cmp ShootingState
+    cmp #ShootingState
     beq .updateShootingSprite
 
     cmp DeathState

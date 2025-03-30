@@ -347,7 +347,7 @@ MovePlayer
     beq .checkMoveRight
 
     ;Dont walk off the left side of teh screen
-    cpx #LeftSide
+    cpx #LEFT_SIDE
     bcc .checkMoveRight
 
     ;Move left
@@ -363,7 +363,7 @@ MovePlayer
     beq .changePlayerToStanding
 
     ;Dont walk off the right side of teh screen
-    cpx #RightSide
+    cpx #RIGHT_SIDE
     bcs .changePlayerToStanding
 
     ;move right!
@@ -376,7 +376,7 @@ MovePlayer
     bne .doneMovingPlayer
 
     ;Set the player's state to walking
-    lda WalkingState
+    lda #WalkingState
     sta p1State,y
 
     jsr RestartAnimation
@@ -420,7 +420,7 @@ CharacterUpdate subroutine
     ;Toggle the color to the blood if required
     ;AND teh game over timer with 16, if it is 0, set the player to neutral color
     lda gameOverTimer
-    bit BloodTime
+    and #BLOOD_TIME
     bne .toggleBloodyColor
 
     jsr .toggleBloodyColor1
@@ -464,7 +464,7 @@ CharacterUpdate subroutine
     beq .checkStandingWalkingInput
 
     ;Check if the player is walking
-    cmp WalkingState
+    cmp #WalkingState
     bne .checkBeginAttacking
 
 .checkStandingWalkingInput
@@ -606,7 +606,7 @@ CharacterUpdate subroutine
     bne .scootBackPlayer2
 
     ;scoot back player 1
-    cpx #LeftSide
+    cpx #LEFT_SIDE
     bcc .doneScootingBack
 
     ;Move left
@@ -617,7 +617,7 @@ CharacterUpdate subroutine
 .scootBackPlayer2
 
     ;scoot back player 2
-    cpx #RightSide
+    cpx #RIGHT_SIDE
     bcs .doneScootingBack
 
     ;move right!

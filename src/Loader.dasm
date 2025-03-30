@@ -31,7 +31,7 @@ SetLoaderAnimation subroutine
     cmp #STANDING_STATE
     beq .setStandingAnimation
 
-    cmp WalkingState
+    cmp #WalkingState
     beq .setWalkingAnimation
 
     cmp BeginAttackState

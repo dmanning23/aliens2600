@@ -28,12 +28,11 @@ ATTACK_TIME equ #15
 BLOCK_TIME equ #18
 KNOCKBACK_TIME equ #40
 
-BloodTime equ #%00010000
-WalkTime equ #%00001000
+BLOOD_TIME equ #%00010000
 
 ;the borders of the screen
-LeftSide equ #16
-RightSide equ #128
+LEFT_SIDE equ #16
+RIGHT_SIDE equ #128
 
 ATTACK_DISTANCE equ #17
 
