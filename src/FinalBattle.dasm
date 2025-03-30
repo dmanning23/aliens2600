@@ -486,8 +486,7 @@ CharacterUpdate subroutine
     jsr RestartAnimation
 
     ;restart the timer
-    ;lda BeginAttackTime ;for some reason this is fubar for player 2
-    lda #12 
+    lda #BEGIN_ATTACK_TIME
     sta p1Timer,y
 
     jmp .doneUpdatingPlayerState
@@ -511,7 +510,7 @@ CharacterUpdate subroutine
     jsr RestartAnimation
 
     ;restart the timer
-    lda BlockTime
+    lda #BLOCK_TIME
     sta p1Timer,y
 
     jmp .doneUpdatingPlayerState
@@ -559,7 +558,7 @@ CharacterUpdate subroutine
     jsr RestartAnimation
 
     ;start the timer
-    lda AttackTime
+    lda #ATTACK_TIME
     sta p1Timer,y
 
     jmp .doneUpdatingPlayerState
@@ -867,7 +866,7 @@ UpdateGameLogic subroutine
     jsr RestartAnimation
 
     ;Set the player's timer
-    lda KnockbackTime
+    lda #KNOCKBACK_TIME
     sta p1Timer,y
 
     jmp .doneUpdatingGameLogic

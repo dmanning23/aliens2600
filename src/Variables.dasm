@@ -22,18 +22,11 @@ controllerLeft      equ #%00000100
 controllerRight     equ #%00001000
 controllerButton    equ #%00010000
 
-;The input flags are as follows:
-controllerDown      equ #%00000001
-controllerUp        equ #%00000010
-controllerLeft      equ #%00000100
-controllerRight     equ #%00001000
-controllerButton    equ #%00010000
-
 ;These are the timers for the various states
-BeginAttackTime	equ #12 
-AttackTime equ #15
-BlockTime equ #18
-KnockbackTime equ #40
+BEGIN_ATTACK_TIME equ #12 
+ATTACK_TIME equ #15
+BLOCK_TIME equ #18
+KNOCKBACK_TIME equ #40
 
 BloodTime equ #%00010000
 WalkTime equ #%00001000
