@@ -34,7 +34,7 @@ BLOOD_TIME equ #%00010000
 LEFT_SIDE equ #2
 RIGHT_SIDE equ #104
 
-ATTACK_DISTANCE equ #17
+ATTACK_DISTANCE equ #36
 
 
 ;The player's X,Y position on the screen
