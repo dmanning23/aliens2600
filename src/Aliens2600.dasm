@@ -240,7 +240,7 @@ InitializeVariables subroutine
     sta Temp
 
     lda #4
-    sta AlienHealth
+    sta HealthP2
 
     lda #0
     sta PlayerStateTimer1
@@ -277,7 +277,7 @@ UpdateAlienInput subroutine
     ldy #1
 
     ;is teh alien dead?
-    lda AlienHealth
+    lda HealthP2
     bne .checkStunned
 
     ;the alien is dee eee dee, ded
@@ -654,19 +654,19 @@ AlienGotShot subroutine
     ;update the alien health?
     lda PlayerState2
     cmp #DEATH_STATE
-    beq .doneUpdateAlienHealth ;dont update if the alien is dead
+    beq .doneUpdateHealthP2 ;dont update if the alien is dead
 
     cmp #DEAD_STATE
-    beq .doneUpdateAlienHealth ;dont update if the alien is dead
+    beq .doneUpdateHealthP2 ;dont update if the alien is dead
 
     cmp #STUNNED_STATE
-    beq .doneUpdateAlienHealth ;dont update if the alien is already stunned
+    beq .doneUpdateHealthP2 ;dont update if the alien is already stunned
 
     ;the alien takes a hit
-    lda AlienHealth
+    lda HealthP2
     sec
     sbc #1
-    sta AlienHealth
+    sta HealthP2
 
     ;does that make the alien dead?
     beq .alienDeath
@@ -687,7 +687,7 @@ AlienGotShot subroutine
     sta currentAnimationTime2
     sta currentAnimationFrame2
 
-    jmp .doneUpdateAlienHealth
+    jmp .doneUpdateHealthP2
 
 .alienDeath
 
@@ -705,7 +705,7 @@ AlienGotShot subroutine
     sta currentAnimationTime2
     sta currentAnimationFrame2
 
-.doneUpdateAlienHealth
+.doneUpdateHealthP2
 
     rts
 
@@ -1151,7 +1151,7 @@ UpdateAlienSprite subroutine
 .updateWalkingSprite 
 
     ;check the health
-    lda AlienHealth
+    lda HealthP2
     cmp #4
     beq .walking100
 
@@ -1163,7 +1163,7 @@ UpdateAlienSprite subroutine
     lda #>alienw25Color11
     sta spriteColorPtr1,x
 
-    lda AlienHealth
+    lda HealthP2
     cmp #3
     beq .walking25
 
@@ -1245,7 +1245,7 @@ UpdateAlienSprite subroutine
 
 .updateStandingSprite
 
-    lda AlienHealth
+    lda HealthP2
     cmp #4
     beq .standing100
 
@@ -1257,7 +1257,7 @@ UpdateAlienSprite subroutine
     lda #>aliens25Color11
     sta spriteColorPtr1,x
 
-    lda AlienHealth
+    lda HealthP2
     cmp #3
     beq .standing25
 
@@ -1347,7 +1347,7 @@ UpdateAlienSprite subroutine
     lda #>alienhit25Color11
     sta spriteColorPtr1,x
 
-    lda AlienHealth
+    lda HealthP2
     cmp #3
     beq .stunned25
 

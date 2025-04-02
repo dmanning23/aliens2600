@@ -105,7 +105,8 @@ p2PrevInput byte
 p1Input byte
 p2Input byte
 
-AlienHealth .byte
+HealthP1 .byte
+HealthP2 .byte
 
 counter .byte
 

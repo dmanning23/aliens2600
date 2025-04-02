@@ -239,6 +239,10 @@ ResetGame
     sta PF1 ;set the pf1 playfield register
     sta PF2 ;set the pf2 playfield register
 
+    lda #2
+    sta HealthP1
+    sta HealthP2
+
     rts
 
 
@@ -586,7 +590,7 @@ CharacterUpdate subroutine
 
     ;check if the timer is done
     lda p1Timer,y
-    bne .doneUpdatingPlayerState
+    bne .jmpDoneUpdatingPlayerState
 
     ;Change state to attacking
     lda #ATTACKING_STATE
@@ -610,7 +614,7 @@ CharacterUpdate subroutine
 
     ;check if the timer is done
     lda p1Timer,y
-    bne .doneUpdatingPlayerState
+    bne .jmpDoneUpdatingPlayerState
 
     ;Change to the standing state
     lda #STANDING_STATE
@@ -618,6 +622,9 @@ CharacterUpdate subroutine
     lda #ANIMATION_LOOP
     sta animationMode1,y
 
+    jmp .doneUpdatingPlayerState
+
+.jmpDoneUpdatingPlayerState
     jmp .doneUpdatingPlayerState
 
 .checkBlocking
@@ -642,7 +649,7 @@ CharacterUpdate subroutine
 
     lda p1State,y
     cmp #KNOCKBACK_STATE
-    bne .doneUpdatingPlayerState
+    bne .checkStunned
 
     ;Scoot the player backwards while they are in knockback state
     ldx XPos1,y ;load the player's position so we can check to not kncok them off screen
@@ -682,7 +689,58 @@ CharacterUpdate subroutine
 
     jmp .doneUpdatingPlayerState
 
+.checkStunned
+
+    lda p1State,y
+    cmp #STUNNED_STATE
+    bne .doneUpdatingPlayerState
+
+    ;Set the players color?
+    lda p1Timer,y
+    and #BLOOD_TIME
+    beq .setStunnedColor
+
+    jmp .doneSettingStunnedColor
+
+.setStunnedColor
+    jsr SetStunnedColor
+
+.doneSettingStunnedColor
+
+    ;Scoot the player backwards while they are in knockback state
+    ldx XPos1,y ;load the player's position so we can check to not kncok them off screen
+    tya
+    ;check which player is being knocked back
+    bne .scootBackPlayer2
+
+    ;scoot back player 1
+    cpx #LEFT_SIDE
+    bcc .doneScootingBack
+
+    ;Move left
+    dex
+    stx XPos1,y
+    jmp .doneScootingBack
+
+
+
 .doneUpdatingPlayerState
+    rts
+
+
+
+SetStunnedColor subroutine
+
+    ;if the player has 0 health, flash red
+    lda HealthP1,y
+    beq .toggleBloodyColor
+
+    ;if the player has 1 health, flash yellow
+    jsr SetBloodyColor1
+    rts
+
+.toggleBloodyColor
+    jsr SetBloodyColor
     rts
 
 
@@ -844,15 +902,15 @@ UpdateGameLogic subroutine
 
 .checkP2BeginAttacking
     cmp #BEGIN_ATTACK_STATE
-    bne .killP2
+    bne .p2TakeHit
 
     ;Both players are attacking, bounce them both
     jmp .setDoubleBounce
 
-.killP2
-    ;p2 has been killed
+.p2TakeHit
+    ;what is player 2's health?
     ldy 1
-    jmp .killPlayer
+    jmp .takeHitLogic
 
 .checkPlayer2GameLogic
     ;is p2 attacking
@@ -872,15 +930,30 @@ UpdateGameLogic subroutine
 .checkP1BeginAttacking
     ;is p1 begin attacking
     cmp #BEGIN_ATTACK_STATE
-    bne .killP1
+    bne .p1TakeHit
 
     ;Both players are attacking, bounce them both
     jmp .setDoubleBounce
 
-.killP1
-    ;p1 has been killed
+.p1TakeHit
+    ;what is player 2's health?
     ldy 0
-    jmp .killPlayer
+    jmp .takeHitLogic
+
+.takeHitLogic
+
+    ;first check if the player is already stunned
+    lda p1State,y
+    cmp #STUNNED_STATE
+    beq .doneUpdatingGameLogic
+
+    ;Check the player's health
+    lda HealthP1,y
+
+    ;p2 has been killed
+    beq .killPlayer
+
+    jmp .stunPlayer
 
 .killPlayer
     ;set teh game to over
@@ -904,6 +977,28 @@ UpdateGameLogic subroutine
     ;Set the player to being knocked back
     lda #KNOCKBACK_STATE
     sta p1State,y
+    lda #ANIMATION_LOOP
+    sta animationMode1,y
+
+    jsr RestartAnimation
+
+    ;Set the player's timer
+    lda #KNOCKBACK_TIME
+    sta p1Timer,y
+
+    jmp .doneUpdatingGameLogic
+
+.stunPlayer
+
+    ;player takes damage
+    sec
+    sbc #1
+    sta HealthP1,y
+
+    ;set player to stunned
+    lda STUNNED_STATE
+    sta p1State,y
+
     lda #ANIMATION_LOOP
     sta animationMode1,y
 
