@@ -223,6 +223,8 @@ ResetGame
     sta currentAnimationTime2
     sta currentAnimationFrame1
     sta currentAnimationFrame2
+    sta animationMode1
+    sta animationMode2
     lda #30
     sta animationTiming1
     sta animationTiming2
@@ -353,6 +355,21 @@ MovePlayer
     ;Move left
     dex
 
+    ;which player is moving? Are they moving backwards?
+    tya
+    bne .setP2WalkingLeft
+
+.setP1WalkingLeft
+    lda #ANIMATION_LOOP_BACKWARDS
+    sta animationMode1,y
+
+    ;Set the player state to walking
+    jmp .changePlayerToWalking
+
+.setP2WalkingLeft
+    lda #ANIMATION_LOOP
+    sta animationMode1,y
+
     ;Set the player state to walking
     jmp .changePlayerToWalking
 
@@ -369,6 +386,21 @@ MovePlayer
     ;move right!
     inx 
 
+    ;which player is moving? Are they moving backwards?
+    tya
+    bne .setP2WalkingRight
+
+.setP1WalkingRight
+    lda #ANIMATION_LOOP
+    sta animationMode1,y
+
+    ;Set the player state to walking
+    jmp .changePlayerToWalking
+
+.setP2WalkingRight
+    lda #ANIMATION_LOOP_BACKWARDS
+    sta animationMode1,y
+
 .changePlayerToWalking
     ;is the player standing?
     lda p1State,y
@@ -378,7 +410,6 @@ MovePlayer
     ;Set the player's state to walking
     lda #WALKING_STATE
     sta p1State,y
-
     jsr RestartAnimation
 
     ;restart the timer
@@ -390,6 +421,8 @@ MovePlayer
 .changePlayerToStanding
     lda #STANDING_STATE
     sta p1State,y
+    lda #ANIMATION_LOOP
+    sta animationMode1,y
 
 .doneMovingPlayer
     ;set the player's new position
@@ -481,6 +514,8 @@ CharacterUpdate subroutine
     ;change the state to "begin attacking"
     lda #BEGIN_ATTACK_STATE
     sta p1State,y
+    lda #ANIMATION_PLAY_ONCE
+    sta animationMode1,y
 
     jsr RestartAnimation
 
@@ -505,6 +540,8 @@ CharacterUpdate subroutine
     ;change the state to blocking
     lda #BLOCKING_STATE
     sta p1State,y
+    lda #ANIMATION_PLAY_ONCE
+    sta animationMode1,y
 
     jsr RestartAnimation
 
@@ -540,6 +577,8 @@ CharacterUpdate subroutine
     ;The player cancelled, change the state to standing
     lda #STANDING_STATE
     sta p1State,y
+    lda #ANIMATION_LOOP
+    sta animationMode1,y
 
     jmp .doneUpdatingPlayerState
 
@@ -552,6 +591,8 @@ CharacterUpdate subroutine
     ;Change state to attacking
     lda #ATTACKING_STATE
     sta p1State,y
+    lda #ANIMATION_PLAY_ONCE
+    sta animationMode1,y
 
     jsr RestartAnimation
 
@@ -574,6 +615,8 @@ CharacterUpdate subroutine
     ;Change to the standing state
     lda #STANDING_STATE
     sta p1State,y
+    lda #ANIMATION_LOOP
+    sta animationMode1,y
 
     jmp .doneUpdatingPlayerState
 
@@ -590,6 +633,8 @@ CharacterUpdate subroutine
     ;Change to the standing state
     lda #STANDING_STATE
     sta p1State,y
+    lda #ANIMATION_LOOP
+    sta animationMode1,y
 
     jmp .doneUpdatingPlayerState
 
@@ -632,6 +677,8 @@ CharacterUpdate subroutine
     ;Change to the standing state
     lda #STANDING_STATE
     sta p1State,y
+    lda #ANIMATION_LOOP
+    sta animationMode1,y
 
     jmp .doneUpdatingPlayerState
 
@@ -857,6 +904,8 @@ UpdateGameLogic subroutine
     ;Set the player to being knocked back
     lda #KNOCKBACK_STATE
     sta p1State,y
+    lda #ANIMATION_LOOP
+    sta animationMode1,y
 
     jsr RestartAnimation
 

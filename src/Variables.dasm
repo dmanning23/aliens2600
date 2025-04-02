@@ -4,10 +4,10 @@ MARINE_HEIGHT equ 16*2
 ;The states are:
 STANDING_STATE equ #00
 WALKING_STATE equ #01
-SHOOTING_STATE equ #02
-STUNNED_STATE equ #03
-DEATH_STATE equ #04
-DEAD_STATE equ #05
+SHOOTING_STATE equ #02 ;TODO: set animation mode to ANIMATION_PLAY_ONCE
+STUNNED_STATE equ #03 ;TODO: set animation mode to ANIMATION_PLAY_ONCE
+DEATH_STATE equ #04 ;TODO: set animation mode to ANIMATION_PLAY_ONCE
+DEAD_STATE equ #05 ;TODO: set animation mode to ANIMATION_PLAY_ONCE
 
 ;used in final battle:
 BEGIN_ATTACK_STATE equ #06
@@ -35,6 +35,12 @@ LEFT_SIDE equ #2
 RIGHT_SIDE equ #104
 
 ATTACK_DISTANCE equ #36
+
+;These constants are for the different playboack modes of animation
+ANIMATION_LOOP equ #00
+ANIMATION_PLAY_ONCE equ #01
+ANIMATION_LOOP_BACKWARDS equ #03
+
 
 
 ;The player's X,Y position on the screen
@@ -83,6 +89,10 @@ currentAnimationTime2 .byte
 ;The current animation frame
 currentAnimationFrame1 .byte
 currentAnimationFrame2 .byte
+
+;the mode of the current animation being played
+animationMode1 .byte
+animationMode2 .byte
 
 ;This variable is used to mask the controller input to map to p1 or p2
 controllerMask  .byte 

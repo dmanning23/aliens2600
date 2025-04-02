@@ -25,10 +25,28 @@ UpdateBossAnimation subroutine
     lda #0                     ; Load 0 into accumulator
     sta currentAnimationTime1,y   ; Reset current AnimationTime to 0
 
+    lda animationMode1,y
+    cmp ANIMATION_LOOP_BACKWARDS
+    beq .decrementFrame
+
     lda currentAnimationFrame1,y
     clc
     adc #1
     sta currentAnimationFrame1,y  ; Increment the animation frame
+
+    jmp .doneUpdatingAnimationTime
+
+.decrementFrame
+    ;Restart the animation on the last frame if it is at 0
+    lda currentAnimationFrame1,y
+    beq .stopOnLastFrame
+
+    lda currentAnimationFrame1,y
+    sec
+    sbc #1
+    sta currentAnimationFrame1,y  ; decrement the animation frame
+
+    jmp .doneUpdatingAnimationFrame
 
 .doneUpdatingAnimationTime
 
@@ -39,16 +57,30 @@ UpdateBossAnimation subroutine
     ;beq .doneUpdatingAnimationFrame ; If equal, we're good
     bcc .doneUpdatingAnimationFrame ; Branch if current AnimationFrame < num AnimationFrames
 
+    ;If we are only playing the animation once, don't loop back to the beginning
+    lda animationMode1,y            ; Load the animation mode
+    cmp #ANIMATION_PLAY_ONCE             ; Is it "play once" mode?
+    beq .stopOnLastFrame            ; If yes, branch to stop logic
+
     ; If we get here, current AnimationFrame >= num AnimationFrames
     lda #0 ; Load 0 into accumulator
     sta currentAnimationFrame1,y ; Reset frame back to 0
+
+    jmp .doneUpdatingAnimationFrame
+
+.stopOnLastFrame 
+    ; For play once mode, set to last valid frame and don't increment anymore
+    lda numAnimationFrames1,y
+    sec                             ; Set carry flag
+    sbc #1                          ; Subtract 1 (to get last valid frame index)
+    sta currentAnimationFrame1,y    ; Set current frame to last frame
 
 .doneUpdatingAnimationFrame:
 
     ;Move the sprite pointer to point to the correct animation frame
 
-    lda currentAnimationFrame1,y  ; Check if frame is 0
-    beq .doneUpdatingSpritePointer                  ; If 0, no adding needed
+    lda currentAnimationFrame1,y ; Check if frame is 0
+    beq .doneUpdatingSpritePointer ; If 0, no adding needed
 
     ldx currentAnimationFrame1,y ; Use X as our frameCounter
     
