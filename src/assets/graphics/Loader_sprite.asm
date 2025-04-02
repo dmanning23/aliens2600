@@ -528,63 +528,11 @@ LoaderBlock52
   .byte %00000000 ; Row 23 (right)
   .byte %00000000 ; Row 24 (right)
 
-LoaderBlock61
-  .byte %00000000 ; Row 1 (left)
-  .byte %11100000 ; Row 2 (left)
-  .byte %11100000 ; Row 3 (left)
-  .byte %11000000 ; Row 4 (left)
-  .byte %01110000 ; Row 5 (left)
-  .byte %00011000 ; Row 6 (left)
-  .byte %00001000 ; Row 7 (left)
-  .byte %00011001 ; Row 8 (left)
-  .byte %00011111 ; Row 9 (left)
-  .byte %00011000 ; Row 10 (left)
-  .byte %00111000 ; Row 11 (left)
-  .byte %00111000 ; Row 12 (left)
-  .byte %00111000 ; Row 13 (left)
-  .byte %01111100 ; Row 14 (left)
-  .byte %01111111 ; Row 15 (left)
-  .byte %01111011 ; Row 16 (left)
-  .byte %00111100 ; Row 17 (left)
-  .byte %00111110 ; Row 18 (left)
-  .byte %00111110 ; Row 19 (left)
-  .byte %00111000 ; Row 20 (left)
-  .byte %00111110 ; Row 21 (left)
-  .byte %00011000 ; Row 22 (left)
-  .byte %00000000 ; Row 23 (left)
-  .byte %00000000 ; Row 24 (left)
-
-LoaderBlock62
-  .byte %00000000 ; Row 1 (right)
-  .byte %01110000 ; Row 2 (right)
-  .byte %01110000 ; Row 3 (right)
-  .byte %11100000 ; Row 4 (right)
-  .byte %11000000 ; Row 5 (right)
-  .byte %11000000 ; Row 6 (right)
-  .byte %01000000 ; Row 7 (right)
-  .byte %10000000 ; Row 8 (right)
-  .byte %00000000 ; Row 9 (right)
-  .byte %00000000 ; Row 10 (right)
-  .byte %00001110 ; Row 11 (right)
-  .byte %00011110 ; Row 12 (right)
-  .byte %00111110 ; Row 13 (right)
-  .byte %11111100 ; Row 14 (right)
-  .byte %11111000 ; Row 15 (right)
-  .byte %11110000 ; Row 16 (right)
-  .byte %01100000 ; Row 17 (right)
-  .byte %00000000 ; Row 18 (right)
-  .byte %00000000 ; Row 19 (right)
-  .byte %00000000 ; Row 20 (right)
-  .byte %00000000 ; Row 21 (right)
-  .byte %00000000 ; Row 22 (right)
-  .byte %00000000 ; Row 23 (right)
-  .byte %00000000 ; Row 24 (right)
-
 LoaderBlockSpeed:
-  .byte 6 ; Animation speed
+  .byte 5 ; Animation speed
 
 LoaderBlockFrames:
-  .byte 6 ; Number of frames
+  .byte 5 ; Number of frames
 
 ;BeginAttack Animation Data:
 LoaderBeginAttack11
@@ -1166,63 +1114,11 @@ LoaderAttack72
   .byte %00000000 ; Row 23 (right)
   .byte %00000000 ; Row 24 (right)
 
-LoaderAttack81
-  .byte %00000000 ; Row 1 (left)
-  .byte %01110000 ; Row 2 (left)
-  .byte %01110000 ; Row 3 (left)
-  .byte %01100000 ; Row 4 (left)
-  .byte %00111000 ; Row 5 (left)
-  .byte %00001100 ; Row 6 (left)
-  .byte %00001110 ; Row 7 (left)
-  .byte %00000111 ; Row 8 (left)
-  .byte %00001111 ; Row 9 (left)
-  .byte %00011100 ; Row 10 (left)
-  .byte %00011100 ; Row 11 (left)
-  .byte %00011101 ; Row 12 (left)
-  .byte %00111111 ; Row 13 (left)
-  .byte %00111111 ; Row 14 (left)
-  .byte %00111101 ; Row 15 (left)
-  .byte %00011100 ; Row 16 (left)
-  .byte %00001100 ; Row 17 (left)
-  .byte %00001111 ; Row 18 (left)
-  .byte %00001111 ; Row 19 (left)
-  .byte %00001110 ; Row 20 (left)
-  .byte %00001111 ; Row 21 (left)
-  .byte %00000111 ; Row 22 (left)
-  .byte %00000000 ; Row 23 (left)
-  .byte %00000000 ; Row 24 (left)
-
-LoaderAttack82
-  .byte %00000000 ; Row 1 (right)
-  .byte %00111000 ; Row 2 (right)
-  .byte %00111000 ; Row 3 (right)
-  .byte %00110000 ; Row 4 (right)
-  .byte %00110000 ; Row 5 (right)
-  .byte %00110000 ; Row 6 (right)
-  .byte %11100000 ; Row 7 (right)
-  .byte %11000000 ; Row 8 (right)
-  .byte %00000000 ; Row 9 (right)
-  .byte %00000000 ; Row 10 (right)
-  .byte %00000000 ; Row 11 (right)
-  .byte %11110000 ; Row 12 (right)
-  .byte %11111110 ; Row 13 (right)
-  .byte %11111110 ; Row 14 (right)
-  .byte %11110000 ; Row 15 (right)
-  .byte %00000000 ; Row 16 (right)
-  .byte %00000000 ; Row 17 (right)
-  .byte %10000000 ; Row 18 (right)
-  .byte %10000000 ; Row 19 (right)
-  .byte %00000000 ; Row 20 (right)
-  .byte %10000000 ; Row 21 (right)
-  .byte %00000000 ; Row 22 (right)
-  .byte %00000000 ; Row 23 (right)
-  .byte %00000000 ; Row 24 (right)
-
 LoaderAttackSpeed:
-  .byte 5 ; Animation speed
+  .byte 4 ; Animation speed
 
 LoaderAttackFrames:
-  .byte 8 ; Number of frames
+  .byte 7 ; Number of frames
 
 ;Walk Animation Data:
 LoaderWalk11
