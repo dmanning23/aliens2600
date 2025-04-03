@@ -134,17 +134,16 @@ SetLoaderAnimation subroutine
 
 .setStunnedAnimation
 
-    ;TODO
     ldx #0
-    lda #<LoaderKnockback11
+    lda #<LoaderStunned11
     sta spritePtr1,x
     inx
-    lda #>LoaderKnockback11
+    lda #>LoaderStunned11
     sta spritePtr1,x
 
-    lda LoaderKnockbackSpeed
+    lda LoaderStunnedSpeed
     sta animationTiming1,y
-    lda LoaderKnockbackFrames
+    lda LoaderStunnedFrames
     sta numAnimationFrames1,y
 
     jmp .doneSettingAnimation
