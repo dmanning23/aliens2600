@@ -46,11 +46,17 @@ SetLoaderAnimation subroutine
     cmp #STUNNED_STATE
     beq .jumpStunnedAnimation
 
+    cmp #DEAD_STATE
+    beq .jumpDeadAnimation
+
     ;The last possible state
     jmp .setKnockbackAnimation
 
 .jumpStunnedAnimation
     jmp .setStunnedAnimation
+
+.jumpDeadAnimation
+    jmp .setDeadAnimation
 
 .setStandingAnimation
     ;set the standing animation
@@ -160,6 +166,22 @@ SetLoaderAnimation subroutine
     lda LoaderKnockbackSpeed
     sta animationTiming1,y
     lda LoaderKnockbackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setDeadAnimation
+
+    ldx #0
+    lda #<LoaderDeath11
+    sta spritePtr1,x
+    inx
+    lda #>LoaderDeath11
+    sta spritePtr1,x
+
+    lda LoaderDeathSpeed
+    sta animationTiming1,y
+    lda LoaderDeathFrames
     sta numAnimationFrames1,y
 
     jmp .doneSettingAnimation

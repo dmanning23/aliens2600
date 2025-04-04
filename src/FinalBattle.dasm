@@ -968,6 +968,11 @@ UpdateGameLogic subroutine
     lda #DEAD_STATE
     sta p1State,y
 
+    lda #ANIMATION_PLAY_ONCE
+    sta animationMode1,y
+
+    jsr RestartAnimation
+
     ;set the players timer
     lda #01
     sta p1Timer,y

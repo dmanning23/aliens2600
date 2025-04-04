@@ -134,17 +134,16 @@ SetAlienQueenAnimation subroutine
 
 .setStunnedAnimation
 
-    ;TODO
     ldx #0
-    lda #<AlienQueenStanding11
+    lda #<AlienQueenStunned11
     sta spritePtr1,x
     inx
-    lda #>AlienQueenStanding11
+    lda #>AlienQueenStunned11
     sta spritePtr1,x
 
-    lda AlienQueenStandingSpeed
+    lda AlienQueenStunnedSpeed
     sta animationTiming1,y
-    lda AlienQueenStandingFrames
+    lda AlienQueenStunnedFrames
     sta numAnimationFrames1,y
 
     jmp .doneSettingAnimation
