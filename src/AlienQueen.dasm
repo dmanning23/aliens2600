@@ -46,11 +46,17 @@ SetAlienQueenAnimation subroutine
     cmp #STUNNED_STATE
     beq .jumpStunnedAnimation
 
+    cmp #DEAD_STATE
+    beq .jumpDeadAnimation
+
     ;The last possible state
     jmp .setKnockbackAnimation
 
 .jumpStunnedAnimation
     jmp .setStunnedAnimation
+
+.jumpDeadAnimation
+    jmp .setDeadAnimation
 
 .setStandingAnimation
     ;set the standing animation
@@ -160,6 +166,22 @@ SetAlienQueenAnimation subroutine
     lda AlienQueenKnockbackSpeed
     sta animationTiming1,y
     lda AlienQueenKnockbackFrames
+    sta numAnimationFrames1,y
+
+    jmp .doneSettingAnimation
+
+.setDeadAnimation
+
+    ldx #0
+    lda #<AlienQueenDeath11
+    sta spritePtr1,x
+    inx
+    lda #>AlienQueenDeath11
+    sta spritePtr1,x
+
+    lda AlienQueenDeathSpeed
+    sta animationTiming1,y
+    lda AlienQueenDeathFrames
     sta numAnimationFrames1,y
 
     jmp .doneSettingAnimation
