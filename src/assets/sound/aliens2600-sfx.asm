@@ -17,6 +17,13 @@ sfxSCREECH = *-SFX_CV-1
     .byte 0,$ef, $ee, $ed, $ec, $eb, $ea, $e9, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $78, $79, $7a, $7b, $7c, $7d, $7e, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f ; AlienDeath
 sfxALIENDEATH = *-SFX_CV-1
 
+
+; Sound effect lengths for looping
+SFX_SHOOT_LENGTH = #21
+SFX_SCREECH_LENGTH = #34
+SFX_ALIENDEATH_LENGTH = #47
+
+
 ; calculate size of SFX_CV table and validate size
 SFX_CVcount = *-SFX_CV
 

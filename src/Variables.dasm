@@ -132,3 +132,7 @@ p2State byte
 ;The character timer, used to time various state actions
 p1Timer byte
 p2Timer byte
+
+;A sound effect timer for the player
+p1SoundEffectTimer byte
+p2SoundEffectTimer byte
