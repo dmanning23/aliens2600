@@ -1108,14 +1108,14 @@ UpdateSound subroutine
     bne .updateQueenSoundEffects
 
     ;check if the walking sfx should be restarted
-    ;lda p1SoundEffectTimer     ; Load soundEffectTimer into accumulator
-    ;cmp #SFX_LOADERWALK_LENGTH    ; Compare with SFX_LOADERWALK_LENGTH constant
-    ;beq .updateQueenSoundEffects ; Branch if Equal (A = SFX_SHOOT_LENGTH)
-    ;bcc .updateQueenSoundEffects ; Branch if Carry Clear (A < SFX_SHOOT_LENGTH)
+    lda p1SoundEffectTimer     ; Load soundEffectTimer into accumulator
+    cmp #SFX_LOADERSTEP_LENGTH    ; Compare with SFX_LOADERWALK_LENGTH constant
+    beq .updateQueenSoundEffects ; Branch if Equal (A = SFX_SHOOT_LENGTH)
+    bcc .updateQueenSoundEffects ; Branch if Carry Clear (A < SFX_SHOOT_LENGTH)
 
     ;the timer is greater than the length of the loader's walk sound effect. Restart it
-    ;ldy #sfxLoaderWalk
-    ;jsr SFX_TRIGGER
+    ldy #sfxLOADERSTEP
+    jsr SFX_TRIGGER
 
     ;restart the sound effect timer
     lda #0
