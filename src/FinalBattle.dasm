@@ -528,6 +528,21 @@ CharacterUpdate subroutine
 
     jsr RestartAnimation
 
+    ;Play the correct "begin attack" sound effect
+    tya
+    bne .playQueenBeginAttackSFX
+
+    ;play the loader BeginAttack sound effect
+    ldy #sfxLOADERBEGINATTACK
+    jsr StartSound
+
+    jmp .doneBeginAttackSFX
+
+.playQueenBeginAttackSFX
+    ;TODO: play the queen BeginAttack sound effect
+
+.doneBeginAttackSFX
+
     ;restart the timer
     lda #BEGIN_ATTACK_TIME
     sta p1Timer,y
@@ -608,6 +623,21 @@ CharacterUpdate subroutine
     ;start the timer
     lda #ATTACK_TIME
     sta p1Timer,y
+
+    ;Play the correct "attack" sound effect
+    tya
+    bne .playQueenAttackSFX
+
+    ;play the loader Attack sound effect
+    ldy #sfxLOADERATTACK
+    jsr StartSound
+
+    jmp .doneAttackSFX
+
+.playQueenAttackSFX
+    ;TODO: play the queen Attack sound effect
+
+.doneAttackSFX
 
     jmp .doneUpdatingPlayerState
 
@@ -1048,7 +1078,7 @@ UpdateGameLogic subroutine
     tya
     beq .playLoaderStunnedSFX
 
-    ;TODO: play the queen stunned sound effect
+    ;play the queen stunned sound effect
     ldy #sfxSCREECH
     jsr StartSound
 
@@ -1077,15 +1107,15 @@ UpdateGameLogic subroutine
 
 StartSound subroutine
 
-    ;restart the sound effect timer
-    lda #0
-    sta p1SoundEffectTimer,y
-
     ;start the sound effect in the sfx engine
     jsr SFX_TRIGGER
 
     ;set the y register back to player number
     jsr SetPlayerCounter
+
+    ;restart the sound effect timer
+    lda #0
+    sta p1SoundEffectTimer,y
 
     rts
 
@@ -1108,18 +1138,19 @@ UpdateSound subroutine
     bne .updateQueenSoundEffects
 
     ;check if the walking sfx should be restarted
+    lda #SFX_LOADERSTEP_LENGTH ;add some dead space to the end of SFX_LOADERWALK_LENGTH
+    clc
+    adc #8
+    sta Temp
+
     lda p1SoundEffectTimer     ; Load soundEffectTimer into accumulator
-    cmp #SFX_LOADERSTEP_LENGTH    ; Compare with SFX_LOADERWALK_LENGTH constant
+    cmp Temp    
     beq .updateQueenSoundEffects ; Branch if Equal (A = SFX_SHOOT_LENGTH)
     bcc .updateQueenSoundEffects ; Branch if Carry Clear (A < SFX_SHOOT_LENGTH)
 
     ;the timer is greater than the length of the loader's walk sound effect. Restart it
     ldy #sfxLOADERSTEP
-    jsr SFX_TRIGGER
-
-    ;restart the sound effect timer
-    lda #0
-    sta p1SoundEffectTimer
+    jsr StartSound
 
     ;TODO: any other looping sound effects?
 
