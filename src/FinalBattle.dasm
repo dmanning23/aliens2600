@@ -1043,12 +1043,14 @@ UpdateGameLogic subroutine
     jsr RestartAnimation
 
     ;Set the player's timer
-    lda #KNOCKBACK_TIME
+    ldy #KNOCKBACK_TIME
     sta p1Timer,y
 
     ;TODO: which player is bounced
 
     ;TODO: play the loader bounce sound effect
+    ldy #sfxLOADERKNOCKBACK
+    jsr StartSound
 
     ;TODO: play the queen bounce sound effect
 
