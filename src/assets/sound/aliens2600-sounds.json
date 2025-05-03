@@ -2,6 +2,264 @@
   "gameName": "Aliens2600",
   "soundEffects": [
     {
+      "id": 1746236345606,
+      "name": "QueenStep",
+      "tones": [
+        {
+          "id": 1746236621152,
+          "control": 8,
+          "volume": 8,
+          "frequency": 9
+        },
+        {
+          "id": 1746236627333,
+          "control": 8,
+          "volume": 8,
+          "frequency": 9
+        },
+        {
+          "id": 1746236628048,
+          "control": 8,
+          "volume": 8,
+          "frequency": 9
+        },
+        {
+          "id": 1746236628920,
+          "control": 8,
+          "volume": 8,
+          "frequency": 9
+        },
+        {
+          "id": 1746236630287,
+          "control": 8,
+          "volume": 8,
+          "frequency": 9
+        },
+        {
+          "id": 1746236630981,
+          "control": 8,
+          "volume": 8,
+          "frequency": 9
+        },
+        {
+          "id": 1746236631837,
+          "control": 8,
+          "volume": 7,
+          "frequency": 9
+        },
+        {
+          "id": 1746236633435,
+          "control": 8,
+          "volume": 8,
+          "frequency": 26
+        },
+        {
+          "id": 1746236636972,
+          "control": 8,
+          "volume": 8,
+          "frequency": 26
+        },
+        {
+          "id": 1746236637678,
+          "control": 8,
+          "volume": 8,
+          "frequency": 26
+        },
+        {
+          "id": 1746236645708,
+          "control": 8,
+          "volume": 8,
+          "frequency": 26
+        },
+        {
+          "id": 1746236646370,
+          "control": 8,
+          "volume": 8,
+          "frequency": 26
+        },
+        {
+          "id": 1746236646917,
+          "control": 8,
+          "volume": 8,
+          "frequency": 26
+        },
+        {
+          "id": 1746236648295,
+          "control": 8,
+          "volume": 7,
+          "frequency": 26
+        },
+        {
+          "id": 1746236650628,
+          "control": 8,
+          "volume": 6,
+          "frequency": 26
+        },
+        {
+          "id": 1746236651995,
+          "control": 8,
+          "volume": 5,
+          "frequency": 26
+        },
+        {
+          "id": 1746236685213,
+          "control": 8,
+          "volume": 4,
+          "frequency": 26
+        },
+        {
+          "id": 1746236685861,
+          "control": 8,
+          "volume": 3,
+          "frequency": 26
+        },
+        {
+          "id": 1746236686517,
+          "control": 8,
+          "volume": 2,
+          "frequency": 26
+        },
+        {
+          "id": 1746236691117,
+          "control": 8,
+          "volume": 1,
+          "frequency": 26
+        }
+      ]
+    },
+    {
+      "id": 1738964730643,
+      "name": "Shoot",
+      "tones": [
+        {
+          "id": 1738964735761,
+          "control": 8,
+          "volume": 15,
+          "frequency": 4
+        },
+        {
+          "id": 1738964736210,
+          "control": 8,
+          "volume": 15,
+          "frequency": 4
+        },
+        {
+          "id": 1738964736689,
+          "control": 8,
+          "volume": 15,
+          "frequency": 4
+        },
+        {
+          "id": 1738964737265,
+          "control": 8,
+          "volume": 15,
+          "frequency": 4
+        },
+        {
+          "id": 1738964742058,
+          "control": 8,
+          "volume": 15,
+          "frequency": 4
+        },
+        {
+          "id": 1738964742609,
+          "control": 8,
+          "volume": 15,
+          "frequency": 4
+        },
+        {
+          "id": 1738964779759,
+          "control": 8,
+          "volume": 15,
+          "frequency": 4
+        },
+        {
+          "id": 1738964780512,
+          "control": 8,
+          "volume": 15,
+          "frequency": 4
+        },
+        {
+          "id": 1738964781513,
+          "control": 8,
+          "volume": 15,
+          "frequency": 6
+        },
+        {
+          "id": 1738965067121,
+          "control": 8,
+          "volume": 15,
+          "frequency": 8
+        },
+        {
+          "id": 1738965068288,
+          "control": 8,
+          "volume": 14,
+          "frequency": 10
+        },
+        {
+          "id": 1738965069455,
+          "control": 8,
+          "volume": 13,
+          "frequency": 12
+        },
+        {
+          "id": 1738965070447,
+          "control": 8,
+          "volume": 11,
+          "frequency": 14
+        },
+        {
+          "id": 1738965071689,
+          "control": 8,
+          "volume": 10,
+          "frequency": 16
+        },
+        {
+          "id": 1738965111318,
+          "control": 8,
+          "volume": 9,
+          "frequency": 18
+        },
+        {
+          "id": 1738965112080,
+          "control": 8,
+          "volume": 8,
+          "frequency": 20
+        },
+        {
+          "id": 1738965209743,
+          "control": 6,
+          "volume": 7,
+          "frequency": 22
+        },
+        {
+          "id": 1738965210887,
+          "control": 6,
+          "volume": 6,
+          "frequency": 24
+        },
+        {
+          "id": 1738965211847,
+          "control": 6,
+          "volume": 5,
+          "frequency": 26
+        },
+        {
+          "id": 1738965212335,
+          "control": 6,
+          "volume": 4,
+          "frequency": 28
+        },
+        {
+          "id": 1738965391556,
+          "control": 6,
+          "volume": 2,
+          "frequency": 30
+        }
+      ]
+    },
+    {
       "id": 1744570445084,
       "name": "LoaderStep",
       "tones": [
@@ -286,138 +544,6 @@
           "control": 2,
           "volume": 3,
           "frequency": 11
-        }
-      ]
-    },
-    {
-      "id": 1738964730643,
-      "name": "Shoot",
-      "tones": [
-        {
-          "id": 1738964735761,
-          "control": 8,
-          "volume": 15,
-          "frequency": 4
-        },
-        {
-          "id": 1738964736210,
-          "control": 8,
-          "volume": 15,
-          "frequency": 4
-        },
-        {
-          "id": 1738964736689,
-          "control": 8,
-          "volume": 15,
-          "frequency": 4
-        },
-        {
-          "id": 1738964737265,
-          "control": 8,
-          "volume": 15,
-          "frequency": 4
-        },
-        {
-          "id": 1738964742058,
-          "control": 8,
-          "volume": 15,
-          "frequency": 4
-        },
-        {
-          "id": 1738964742609,
-          "control": 8,
-          "volume": 15,
-          "frequency": 4
-        },
-        {
-          "id": 1738964779759,
-          "control": 8,
-          "volume": 15,
-          "frequency": 4
-        },
-        {
-          "id": 1738964780512,
-          "control": 8,
-          "volume": 15,
-          "frequency": 4
-        },
-        {
-          "id": 1738964781513,
-          "control": 8,
-          "volume": 15,
-          "frequency": 6
-        },
-        {
-          "id": 1738965067121,
-          "control": 8,
-          "volume": 15,
-          "frequency": 8
-        },
-        {
-          "id": 1738965068288,
-          "control": 8,
-          "volume": 14,
-          "frequency": 10
-        },
-        {
-          "id": 1738965069455,
-          "control": 8,
-          "volume": 13,
-          "frequency": 12
-        },
-        {
-          "id": 1738965070447,
-          "control": 8,
-          "volume": 11,
-          "frequency": 14
-        },
-        {
-          "id": 1738965071689,
-          "control": 8,
-          "volume": 10,
-          "frequency": 16
-        },
-        {
-          "id": 1738965111318,
-          "control": 8,
-          "volume": 9,
-          "frequency": 18
-        },
-        {
-          "id": 1738965112080,
-          "control": 8,
-          "volume": 8,
-          "frequency": 20
-        },
-        {
-          "id": 1738965209743,
-          "control": 6,
-          "volume": 7,
-          "frequency": 22
-        },
-        {
-          "id": 1738965210887,
-          "control": 6,
-          "volume": 6,
-          "frequency": 24
-        },
-        {
-          "id": 1738965211847,
-          "control": 6,
-          "volume": 5,
-          "frequency": 26
-        },
-        {
-          "id": 1738965212335,
-          "control": 6,
-          "volume": 4,
-          "frequency": 28
-        },
-        {
-          "id": 1738965391556,
-          "control": 6,
-          "volume": 2,
-          "frequency": 30
         }
       ]
     },

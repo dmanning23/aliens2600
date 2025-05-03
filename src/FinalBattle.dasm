@@ -1046,13 +1046,9 @@ UpdateGameLogic subroutine
     ldy #KNOCKBACK_TIME
     sta p1Timer,y
 
-    ;TODO: which player is bounced
-
-    ;TODO: play the loader bounce sound effect
+    ;play the bounce sound effect
     ldy #sfxLOADERKNOCKBACK
     jsr StartSound
-
-    ;TODO: play the queen bounce sound effect
 
     jmp .doneUpdatingGameLogic
 
@@ -1158,7 +1154,25 @@ UpdateSound subroutine
 
 .updateQueenSoundEffects
 
-    ;TODO: Queen walking sound effect
+    ;is the Queen walking
+    lda p2State
+    cmp WALKING_STATE
+    bne .doneUpdatingSoundEffects
+
+    ;check if the walking sfx should be restarted
+    lda #SFX_QUEENSTEP_LENGTH ;add some dead space to the end of the sound effect
+    clc
+    adc #16
+    sta Temp
+
+    lda p2SoundEffectTimer     ; Load soundEffectTimer into accumulator
+    cmp Temp
+    beq .doneUpdatingSoundEffects ; Branch if Equal (A = SFX_SHOOT_LENGTH)
+    bcc .doneUpdatingSoundEffects ; Branch if Carry Clear (A < SFX_SHOOT_LENGTH)
+
+    ;the timer is greater than the length of the Queen's walk sound effect. Restart it
+    ldy #sfxLOADERSTEP
+    jsr StartSound
 
 .doneUpdatingSoundEffects
     rts
