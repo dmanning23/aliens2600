@@ -1162,7 +1162,7 @@ UpdateSound subroutine
     ;check if the walking sfx should be restarted
     lda #SFX_QUEENSTEP_LENGTH ;add some dead space to the end of the sound effect
     clc
-    adc #32
+    adc #10
     sta Temp
 
     lda p2SoundEffectTimer     ; Load soundEffectTimer into accumulator

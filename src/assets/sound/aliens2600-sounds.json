@@ -6,6 +6,150 @@
       "name": "QueenStep",
       "tones": [
         {
+          "id": 1747265477116,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265479526,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265480291,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265481377,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265481984,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265482892,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265485566,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265486060,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265276717,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265277458,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265284713,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265285385,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265285994,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265287521,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265288112,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265288649,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265289235,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265289664,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265290329,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265322693,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265323179,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265323682,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265324195,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
+          "id": 1747265324802,
+          "control": 8,
+          "volume": 0,
+          "frequency": 26
+        },
+        {
           "id": 1746236621152,
           "control": 8,
           "volume": 8,

@@ -16,7 +16,7 @@ SFX_ID_ALIENDEATH = 8
 
 
 ; Sound effect lengths for reference
-SFX_QUEENSTEP_LENGTH = #20
+SFX_QUEENSTEP_LENGTH = #44
 SFX_SHOOT_LENGTH = #21
 SFX_LOADERSTEP_LENGTH = #47
 SFX_LOADERATTACK_LENGTH = #26
@@ -33,11 +33,11 @@ SFX_ALIENDEATH_LENGTH = #47
 ;   Next N bytes = Control/Volume values
 
 sfxQUEENSTEP:
-    .byte #20 ; QueenStep Length
+    .byte #44 ; QueenStep Length
     ; Frequency values
-    .byte 9, 9, 9, 9, 9, 9, 9, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26
+    .byte 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 9, 9, 9, 9, 9, 9, 9, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26
     ; Control/Volume values
-    .byte $88, $88, $88, $88, $88, $88, $87, $88, $88, $88, $88, $88, $88, $87, $86, $85, $84, $83, $82, $81
+    .byte $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $80, $88, $88, $88, $88, $88, $88, $87, $88, $88, $88, $88, $88, $88, $87, $86, $85, $84, $83, $82, $81
 
 sfxSHOOT:
     .byte #21 ; Shoot Length
