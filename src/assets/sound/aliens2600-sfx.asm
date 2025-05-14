@@ -1,36 +1,21 @@
-SFX_F:
-    .byte 0, 30, 28, 26, 24, 22, 20, 18, 16, 14, 12, 10, 8, 6, 4, 4, 4, 4, 4, 4, 4, 4 ; Shoot
-    .byte 0, 11, 11, 11, 11, 11, 11, 11, 11, 11, 7, 7, 7, 7, 7, 7, 7, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 13, 13, 13, 16, 16, 11, 13, 13, 13, 16, 16, 16, 16, 16 ; LoaderStep
-    .byte 0, 12, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20 ; LoaderAttack
-    .byte 0, 14, 14, 14, 14, 14, 14, 14, 14, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 24, 24 ; LoaderBeginAttack
-    .byte 0, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 12, 11, 11, 9, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 ; LoaderKnockback
-    .byte 0, 15, 14, 13, 12, 11, 10, 9, 8, 7, 7, 7, 6, 5, 5, 4, 4, 4, 4, 3, 3, 2, 2, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 ; Screech
-    .byte 0, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 29, 27, 25, 23, 21, 19, 17, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, 0, 0, 0 ; AlienDeath
 
-; calculate size of SFX_F table and validate size
-SFX_Fcount = * -SFX_F
-    if SFX_Fcount > 256
-        echo "SFX Warning: table SFX_F is too large"
-    endif
-    
-SFX_CV:
-    .byte 0,$62, $64, $65, $66, $67, $88, $89, $8a, $8b, $8d, $8e, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f ; Shoot
-sfxSHOOT = *-SFX_CV-1
-    .byte 0,$23, $24, $25, $26, $27, $27, $27, $27, $27, $27, $26, $26, $20, $20, $26, $26, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f5, $f5, $f6, $f6, $f6, $f6, $f5, $f5, $f4, $f3, $f2 ; LoaderStep
-sfxLOADERSTEP = *-SFX_CV-1
-    .byte 0,$81, $81, $83, $85, $87, $89, $8b, $8d, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f ; LoaderAttack
-sfxLOADERATTACK = *-SFX_CV-1
-    .byte 0,$fe, $fe, $fe, $fe, $fe, $fe, $fe, $fd, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc ; LoaderBeginAttack
-sfxLOADERBEGINATTACK = *-SFX_CV-1
-    .byte 0,$28, $28, $28, $28, $28, $28, $28, $28, $28, $28, $28, $28, $28, $28, $2a, $2b, $2c, $2c, $2c, $2c, $2c, $2c, $2c, $2c, $62, $62, $64, $66, $68, $6a, $6c, $6c, $6c, $6c, $6c ; LoaderKnockback
-sfxLOADERKNOCKBACK = *-SFX_CV-1
-    .byte 0,$3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f ; Screech
-sfxSCREECH = *-SFX_CV-1
-    .byte 0,$ef, $ee, $ed, $ec, $eb, $ea, $e9, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $78, $79, $7a, $7b, $7c, $7d, $7e, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f ; AlienDeath
-sfxALIENDEATH = *-SFX_CV-1
+; Generic Sound Effect Engine for Atari 2600
+; -----------------------------------------
 
 
-; Sound effect lengths for looping
+
+; Sound Effect IDs
+SFX_ID_QUEENSTEP = 1
+SFX_ID_SHOOT = 2
+SFX_ID_LOADERSTEP = 3
+SFX_ID_LOADERATTACK = 4
+SFX_ID_LOADERBEGINATTACK = 5
+SFX_ID_LOADERKNOCKBACK = 6
+SFX_ID_SCREECH = 7
+SFX_ID_ALIENDEATH = 8
+
+
+; Sound effect lengths for reference
 SFX_QUEENSTEP_LENGTH = #20
 SFX_SHOOT_LENGTH = #21
 SFX_LOADERSTEP_LENGTH = #47
@@ -41,76 +26,271 @@ SFX_SCREECH_LENGTH = #34
 SFX_ALIENDEATH_LENGTH = #47
 
 
-; calculate size of SFX_CV table and validate size
-SFX_CVcount = *-SFX_CV
+; Sound Effect Data Structures
+; Format: 
+;   First byte = Length of sound effect
+;   Next N bytes = Frequency values
+;   Next N bytes = Control/Volume values
 
- if SFX_CVcount > 256
-     echo "SFX Warning: table SFX_CV is too large"
- endif
- if SFX_CVcount != SFX_Fcount
-    echo "SFX Warning: table SFX_F is not the same size as table SFX_CV"
- endif
+sfxQUEENSTEP:
+    .byte #20 ; QueenStep Length
+    ; Frequency values
+    .byte 9, 9, 9, 9, 9, 9, 9, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26, 26
+    ; Control/Volume values
+    .byte $88, $88, $88, $88, $88, $88, $87, $88, $88, $88, $88, $88, $88, $87, $86, $85, $84, $83, $82, $81
+
+sfxSHOOT:
+    .byte #21 ; Shoot Length
+    ; Frequency values
+    .byte 4, 4, 4, 4, 4, 4, 4, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30
+    ; Control/Volume values
+    .byte $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8e, $8d, $8b, $8a, $89, $88, $67, $66, $65, $64, $62
+
+sfxLOADERSTEP:
+    .byte #47 ; LoaderStep Length
+    ; Frequency values
+    .byte 16, 16, 16, 16, 16, 13, 13, 13, 11, 16, 16, 13, 13, 13, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 7, 7, 7, 7, 7, 7, 7, 11, 11, 11, 11, 11, 11, 11, 11, 11
+    ; Control/Volume values
+    .byte $f2, $f3, $f4, $f5, $f5, $f6, $f6, $f6, $f6, $f5, $f5, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $f6, $26, $26, $20, $20, $26, $26, $27, $27, $27, $27, $27, $27, $26, $25, $24, $23
+
+sfxLOADERATTACK:
+    .byte #26 ; LoaderAttack Length
+    ; Frequency values
+    .byte 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12
+    ; Control/Volume values
+    .byte $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8d, $8b, $89, $87, $85, $83, $81, $81
+
+sfxLOADERBEGINATTACK:
+    .byte #21 ; LoaderBeginAttack Length
+    ; Frequency values
+    .byte 24, 24, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 14, 14, 14, 14, 14, 14, 14, 14
+    ; Control/Volume values
+    .byte $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fd, $fe, $fe, $fe, $fe, $fe, $fe, $fe
+
+sfxLOADERKNOCKBACK:
+    .byte #35 ; LoaderKnockback Length
+    ; Frequency values
+    .byte 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 11, 11, 12, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22, 22
+    ; Control/Volume values
+    .byte $6c, $6c, $6c, $6c, $6c, $6a, $68, $66, $64, $62, $62, $2c, $2c, $2c, $2c, $2c, $2c, $2c, $2c, $2b, $2a, $28, $28, $28, $28, $28, $28, $28, $28, $28, $28, $28, $28, $28, $28
+
+sfxSCREECH:
+    .byte #34 ; Screech Length
+    ; Frequency values
+    .byte 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 4, 4, 5, 5, 6, 7, 7, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    ; Control/Volume values
+    .byte $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f
+
+sfxALIENDEATH:
+    .byte #47 ; AlienDeath Length
+    ; Frequency values
+    .byte 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 19, 21, 23, 25, 27, 29, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+    ; Control/Volume values
+    .byte $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7e, $7d, $7c, $7b, $7a, $79, $78, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e9, $ea, $eb, $ec, $ed, $ee, $ef
 
 
+; Sound Effect Table
+SFXTable:
+    .word sfxQUEENSTEP ; ID = 1
+    .word sfxSHOOT ; ID = 2
+    .word sfxLOADERSTEP ; ID = 3
+    .word sfxLOADERATTACK ; ID = 4
+    .word sfxLOADERBEGINATTACK ; ID = 5
+    .word sfxLOADERKNOCKBACK ; ID = 6
+    .word sfxSCREECH ; ID = 7
+    .word sfxALIENDEATH ; ID = 8
+
+
+; Turn off all sound
+; Call this during game initialization
 SFX_OFF:
-    ldx #0             ; silence sound output
+    ldx #0             ; Silence sound output
     stx SFX_LEFT
     stx SFX_RIGHT
     stx AUDV0
     stx AUDV1
     stx AUDC0
     stx AUDC1
+    stx SFX_LEFT_TIMER
+    stx SFX_RIGHT_TIMER
     rts
 
+; Trigger a sound effect
+; Input: Y register = sound effect ID (1, 2, 3, etc.)
+; Higher numbered IDs have higher priority
 SFX_TRIGGER:
-    ldx SFX_LEFT       ; test left channel
-    lda SFX_CV,x        ; CV value will be 0 if channel is idle
-    bne .leftnotfree   ; if not 0 then skip ahead
-    sty SFX_LEFT       ; channel is idle, use it
-    rts                ; all done
+    lda SFX_LEFT       ; Test left channel, will be 0 if channel is idle
+    bne .leftnotfree   ; If not 0 then skip ahead
+    sty SFX_LEFT       ; Channel is idle, use it
+    lda #0             ; Reset the timer for the left channel
+    sta SFX_LEFT_TIMER
+    rts                ; All done
 .leftnotfree:
-    ldx SFX_RIGHT      ; test right channel
-    lda SFX_CV,x        ; CV value will be 0 if channel is idle
-    bne .rightnotfree  ; if not 0 then skip ahead
-    sty SFX_RIGHT      ; channel is idle, use it
-    rts                ; all done
+    lda SFX_RIGHT      ; Test right channel, will be 0 if channel is idle
+    bne .rightnotfree  ; If not 0 then skip ahead
+    sty SFX_RIGHT      ; Channel is idle, use it
+    lda #0             ; Reset the timer for the right channel
+    sta SFX_RIGHT_TIMER
+    rts                ; All done
 .rightnotfree:
-    cpy SFX_LEFT       ; test sfx priority with left channel
-    bcc .leftnotlower  ; skip ahead if new sfx has lower priority than active sfx
-    sty SFX_LEFT       ; new sfx has higher priority so use left channel
-    rts                ; all done
+    cpy SFX_LEFT       ; Test sfx priority with left channel
+    bcc .leftnotlower  ; Skip ahead if new sfx has lower priority than active sfx
+    sty SFX_LEFT       ; New sfx has higher priority so use left channel
+    lda #0             ; Reset the timer for the left channel
+    sta SFX_LEFT_TIMER
+    rts                ; All done
 .leftnotlower:
-    cpy SFX_RIGHT      ; test sfx with right channel
-    bcc .rightnotlower ; skip ahead if new sfx has lower priority than active sfx
-    sty SFX_RIGHT      ; new sfx has higher priority so use right channel
+    cpy SFX_RIGHT      ; Test sfx with right channel
+    bcc .rightnotlower ; Skip ahead if new sfx has lower priority than active sfx
+    sty SFX_RIGHT      ; New sfx has higher priority so use right channel
+    lda #0             ; Reset the timer for the right channel
+    sta SFX_RIGHT_TIMER
 .rightnotlower:
     rts
 
+; Update sound effects - call this once per frame
 SFX_UPDATE:
-    ldx SFX_LEFT       ; get the pointer for the left channel
-    lda SFX_F,x         ; get the Frequency value
-    sta AUDF0          ; update the Frequency register
-    lda SFX_CV,x        ; get the combined Control and Volume value
-    sta AUDV0          ; update the Volume register
-    lsr                ; prep the Control value,
-    lsr                ;   it's stored in the upper nybble
-    lsr                ;   but must be in the lower nybble
-    lsr                ;   when Control is updated
-    sta AUDC0          ; update the Control register
-    beq .skipleftdec   ; skip ahead if Control = 0
-    dec SFX_LEFT       ; update pointer for left channel
-.skipleftdec:
-    ldx SFX_RIGHT      ; get the pointer for the right channel
-    lda SFX_F,x         ; get the Frequency value
-    sta AUDF1          ; update the Frequency register
-    lda SFX_CV,x        ; get the combined Control and Volume value
-    sta AUDV1          ; update the Volume register
-    lsr                ; prep the Control value,
-    lsr                ;   it's stored in the upper nybble
-    lsr                ;   but must be in the lower nybble
-    lsr                ;   when Control is updated
-    sta AUDC1          ; update the Control register
-    beq .skiprightdec  ; skip ahead if Control = 0
-    dec SFX_RIGHT      ; update pointer for right channel
-.skiprightdec:
-    rts                ; all done
+    ;----- LEFT CHANNEL UPDATE -----
+    lda SFX_LEFT          ; Load the left channel sound effect ID
+    beq .updateRight      ; If 0, no sound playing, jump to right channel
+    
+    ; Increment the left channel timer
+    inc SFX_LEFT_TIMER
+    
+    ; Calculate table index (ID-1)*2
+    tax                   ; Sound effect ID in X
+    dex                   ; Adjust for 0-based indexing
+    txa
+    asl                   ; Multiply by 2 (for 16-bit address)
+    tax                   ; Put index back in X
+    
+    ; Load sound effect address into TempWord
+    lda SFXTable,x
+    sta TempWord
+    lda SFXTable+1,x
+    sta TempWord+1
+    
+    ; Get length of the sound effect
+    ldy #0
+    lda (TempWord),y          ; Get length byte
+    
+    ; Check if sound effect is finished
+    cmp SFX_LEFT_TIMER
+    bne .leftContinue
+    
+    ; Sound effect is finished
+    lda #0
+    sta SFX_LEFT
+    sta SFX_LEFT_TIMER
+    sta AUDV0             ; Silence channel
+    jmp .updateRight
+    
+.leftContinue:
+    ; Get frequency value
+    ldy SFX_LEFT_TIMER
+    iny                   ; Skip length byte
+    lda (TempWord),y          ; Get frequency
+    sta AUDF0             
+    
+    ; Calculate offset to control/volume data
+    ldy #0
+    lda (TempWord),y          ; Get length again
+    clc
+    adc #1                ; Add 1 to skip length byte
+    adc SFX_LEFT_TIMER    ; Add current timer position
+    tay                   ; Index in Y
+    
+    ; Get control/volume value
+    lda (TempWord),y          ; Get CV byte
+    
+    ; Split into volume and control
+    tax                   ; Save full value in X
+    and #$0F              ; Mask for volume (low 4 bits)
+    sta AUDV0             ; Set volume
+    
+    txa                   ; Get full value back
+    lsr                   ; Shift right 4 times for control
+    lsr
+    lsr
+    lsr
+    sta AUDC0             ; Set control
+    
+    ;----- RIGHT CHANNEL UPDATE -----
+.updateRight:
+    lda SFX_RIGHT         ; Load the right channel sound effect ID
+    beq .done             ; If 0, no sound playing, we're done
+    
+    ; Increment the right channel timer
+    inc SFX_RIGHT_TIMER
+    
+    ; Calculate table index (ID-1)*2
+    tax                   ; Sound effect ID in X
+    dex                   ; Adjust for 0-based indexing
+    txa
+    asl                   ; Multiply by 2 (for 16-bit address)
+    tax                   ; Put index back in X
+    
+    ; Load sound effect address into TempWord
+    lda SFXTable,x
+    sta TempWord
+    lda SFXTable+1,x
+    sta TempWord+1
+    
+    ; Get length of the sound effect
+    ldy #0
+    lda (TempWord),y          ; Get length byte
+    
+    ; Check if sound effect is finished
+    cmp SFX_RIGHT_TIMER
+    bne .rightContinue
+    
+    ; Sound effect is finished
+    lda #0
+    sta SFX_RIGHT
+    sta SFX_RIGHT_TIMER
+    sta AUDV1             ; Silence channel
+    jmp .done
+    
+.rightContinue:
+    ; Get frequency value
+    ldy SFX_RIGHT_TIMER
+    iny                   ; Skip length byte
+    lda (TempWord),y          ; Get frequency
+    sta AUDF1             
+    
+    ; Calculate offset to control/volume data
+    ldy #0
+    lda (TempWord),y          ; Get length again
+    clc
+    adc #1                ; Add 1 to skip length byte
+    adc SFX_RIGHT_TIMER   ; Add current timer position
+    tay                   ; Index in Y
+    
+    ; Get control/volume value
+    lda (TempWord),y          ; Get CV byte
+    
+    ; Split into volume and control
+    tax                   ; Save full value in X
+    and #$0F              ; Mask for volume (low 4 bits)
+    sta AUDV1             ; Set volume
+    
+    txa                   ; Get full value back
+    lsr                   ; Shift right 4 times for control
+    lsr
+    lsr
+    lsr
+    sta AUDC1             ; Set control
+    
+.done:
+    rts
+
+; Example of how to use the sound engine:
+; 1. Initialize the sound engine
+;    jsr SFX_OFF
+;
+; 2. Trigger a sound effect
+;    ldy #SFX_ID_SHOOT (replace with your sound effect ID)
+;    jsr SFX_TRIGGER
+;
+; 3. Update the sound engine once per frame (in your main game loop)
+;    jsr SFX_UPDATE

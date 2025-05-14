@@ -533,7 +533,7 @@ CharacterUpdate subroutine
     bne .playQueenBeginAttackSFX
 
     ;play the loader BeginAttack sound effect
-    ldy #sfxLOADERBEGINATTACK
+    ldy #SFX_ID_LOADERBEGINATTACK
     jsr StartSound
 
     jmp .doneBeginAttackSFX
@@ -629,7 +629,7 @@ CharacterUpdate subroutine
     bne .playQueenAttackSFX
 
     ;play the loader Attack sound effect
-    ldy #sfxLOADERATTACK
+    ldy #SFX_ID_LOADERATTACK
     jsr StartSound
 
     jmp .doneAttackSFX
@@ -1021,7 +1021,7 @@ UpdateGameLogic subroutine
     beq .playLoaderDeathSFX
 
     ;play the queen death sound
-    ldy #sfxALIENDEATH
+    ldy #SFX_ID_ALIENDEATH
     jsr StartSound
 
     jmp .doneKillingPlayer
@@ -1047,7 +1047,7 @@ UpdateGameLogic subroutine
     sta p1Timer,y
 
     ;play the bounce sound effect
-    ldy #sfxLOADERKNOCKBACK
+    ldy #SFX_ID_LOADERKNOCKBACK
     jsr StartSound
 
     jmp .doneUpdatingGameLogic
@@ -1077,7 +1077,7 @@ UpdateGameLogic subroutine
     beq .playLoaderStunnedSFX
 
     ;play the queen stunned sound effect
-    ldy #sfxSCREECH
+    ldy #SFX_ID_SCREECH
     jsr StartSound
 
     jmp .doneStunningPlayer
@@ -1147,7 +1147,7 @@ UpdateSound subroutine
     bcc .updateQueenSoundEffects ; Branch if Carry Clear (A < SFX_SHOOT_LENGTH)
 
     ;the timer is greater than the length of the loader's walk sound effect. Restart it
-    ldy #sfxLOADERSTEP
+    ldy #SFX_ID_LOADERSTEP
     jsr StartSound
 
     ;TODO: any other looping sound effects?
@@ -1162,7 +1162,7 @@ UpdateSound subroutine
     ;check if the walking sfx should be restarted
     lda #SFX_QUEENSTEP_LENGTH ;add some dead space to the end of the sound effect
     clc
-    adc #16
+    adc #32
     sta Temp
 
     lda p2SoundEffectTimer     ; Load soundEffectTimer into accumulator
@@ -1171,7 +1171,7 @@ UpdateSound subroutine
     bcc .doneUpdatingSoundEffects ; Branch if Carry Clear (A < SFX_SHOOT_LENGTH)
 
     ;the timer is greater than the length of the Queen's walk sound effect. Restart it
-    ldy #sfxLOADERSTEP
+    ldy #SFX_ID_QUEENSTEP
     jsr StartSound
 
 .doneUpdatingSoundEffects

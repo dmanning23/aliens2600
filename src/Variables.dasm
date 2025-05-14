@@ -113,9 +113,12 @@ counter .byte
 ;scratch variable
 Temp .byte
 
-; indexes for sound effect driver    
-SFX_LEFT: ds 1    ; stored in $B1
-SFX_RIGHT: ds 1    ; stored in $B2
+;Variables requires for sound effect driver
+SFX_LEFT .byte
+SFX_RIGHT .byte
+SFX_LEFT_TIMER .byte
+SFX_RIGHT_TIMER .byte
+TempWord .word
 
 ;Whether or not the game is over
 ;0 game is not over
