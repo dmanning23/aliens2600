@@ -10,9 +10,10 @@ SFX_ID_SHOOT = 2
 SFX_ID_LOADERSTEP = 3
 SFX_ID_LOADERATTACK = 4
 SFX_ID_LOADERBEGINATTACK = 5
-SFX_ID_LOADERKNOCKBACK = 6
-SFX_ID_SCREECH = 7
-SFX_ID_ALIENDEATH = 8
+SFX_ID_LOADERBLOCK = 6
+SFX_ID_LOADERKNOCKBACK = 7
+SFX_ID_SCREECH = 8
+SFX_ID_ALIENDEATH = 9
 
 
 ; Sound effect lengths for reference
@@ -21,6 +22,7 @@ SFX_SHOOT_LENGTH = #21
 SFX_LOADERSTEP_LENGTH = #47
 SFX_LOADERATTACK_LENGTH = #26
 SFX_LOADERBEGINATTACK_LENGTH = #21
+SFX_LOADERBLOCK_LENGTH = #21
 SFX_LOADERKNOCKBACK_LENGTH = #35
 SFX_SCREECH_LENGTH = #34
 SFX_ALIENDEATH_LENGTH = #47
@@ -67,6 +69,13 @@ sfxLOADERBEGINATTACK:
     ; Control/Volume values
     .byte $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fd, $fe, $fe, $fe, $fe, $fe, $fe, $fe
 
+sfxLOADERBLOCK:
+    .byte #21 ; LoaderBlock Length
+    ; Frequency values
+    .byte 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 10, 0, 1, 2, 3, 4, 5, 6, 7, 8
+    ; Control/Volume values
+    .byte $fc, $fc, $fc, $fc, $fc, $fc, $fc, $fd, $fd, $fd, $fd, $fe, $8c, $8d, $8e, $8e, $8e, $8e, $8e, $8e, $8e
+
 sfxLOADERKNOCKBACK:
     .byte #35 ; LoaderKnockback Length
     ; Frequency values
@@ -96,9 +105,10 @@ SFXTable:
     .word sfxLOADERSTEP ; ID = 3
     .word sfxLOADERATTACK ; ID = 4
     .word sfxLOADERBEGINATTACK ; ID = 5
-    .word sfxLOADERKNOCKBACK ; ID = 6
-    .word sfxSCREECH ; ID = 7
-    .word sfxALIENDEATH ; ID = 8
+    .word sfxLOADERBLOCK ; ID = 6
+    .word sfxLOADERKNOCKBACK ; ID = 7
+    .word sfxSCREECH ; ID = 8
+    .word sfxALIENDEATH ; ID = 9
 
 
 ; Turn off all sound
@@ -154,9 +164,6 @@ SFX_UPDATE:
     lda SFX_LEFT          ; Load the left channel sound effect ID
     beq .updateRight      ; If 0, no sound playing, jump to right channel
     
-    ; Increment the left channel timer
-    inc SFX_LEFT_TIMER
-    
     ; Calculate table index (ID-1)*2
     tax                   ; Sound effect ID in X
     dex                   ; Adjust for 0-based indexing
@@ -170,38 +177,22 @@ SFX_UPDATE:
     lda SFXTable+1,x
     sta TempWord+1
     
-    ; Get length of the sound effect
-    ldy #0
-    lda (TempWord),y          ; Get length byte
-    
-    ; Check if sound effect is finished
-    cmp SFX_LEFT_TIMER
-    bne .leftContinue
-    
-    ; Sound effect is finished
-    lda #0
-    sta SFX_LEFT
-    sta SFX_LEFT_TIMER
-    sta AUDV0             ; Silence channel
-    jmp .updateRight
-    
-.leftContinue:
-    ; Get frequency value
+    ; Get frequency value BEFORE incrementing timer
     ldy SFX_LEFT_TIMER
     iny                   ; Skip length byte
-    lda (TempWord),y          ; Get frequency
+    lda (TempWord),y      ; Get frequency
     sta AUDF0             
     
     ; Calculate offset to control/volume data
     ldy #0
-    lda (TempWord),y          ; Get length again
+    lda (TempWord),y      ; Get length
     clc
     adc #1                ; Add 1 to skip length byte
     adc SFX_LEFT_TIMER    ; Add current timer position
     tay                   ; Index in Y
     
     ; Get control/volume value
-    lda (TempWord),y          ; Get CV byte
+    lda (TempWord),y      ; Get CV byte
     
     ; Split into volume and control
     tax                   ; Save full value in X
@@ -215,13 +206,27 @@ SFX_UPDATE:
     lsr
     sta AUDC0             ; Set control
     
+    ; NOW increment the timer after using it
+    inc SFX_LEFT_TIMER
+    
+    ; Get length of the sound effect to check if finished
+    ldy #0
+    lda (TempWord),y      ; Get length byte
+    
+    ; Check if sound effect is finished
+    cmp SFX_LEFT_TIMER
+    bne .updateRight      ; Continue if not finished
+    
+    ; Sound effect is finished
+    lda #0
+    sta SFX_LEFT
+    sta SFX_LEFT_TIMER
+    sta AUDV0             ; Silence channel
+    
     ;----- RIGHT CHANNEL UPDATE -----
 .updateRight:
     lda SFX_RIGHT         ; Load the right channel sound effect ID
     beq .done             ; If 0, no sound playing, we're done
-    
-    ; Increment the right channel timer
-    inc SFX_RIGHT_TIMER
     
     ; Calculate table index (ID-1)*2
     tax                   ; Sound effect ID in X
@@ -236,38 +241,22 @@ SFX_UPDATE:
     lda SFXTable+1,x
     sta TempWord+1
     
-    ; Get length of the sound effect
-    ldy #0
-    lda (TempWord),y          ; Get length byte
-    
-    ; Check if sound effect is finished
-    cmp SFX_RIGHT_TIMER
-    bne .rightContinue
-    
-    ; Sound effect is finished
-    lda #0
-    sta SFX_RIGHT
-    sta SFX_RIGHT_TIMER
-    sta AUDV1             ; Silence channel
-    jmp .done
-    
-.rightContinue:
-    ; Get frequency value
+    ; Get frequency value BEFORE incrementing timer
     ldy SFX_RIGHT_TIMER
     iny                   ; Skip length byte
-    lda (TempWord),y          ; Get frequency
+    lda (TempWord),y      ; Get frequency
     sta AUDF1             
     
     ; Calculate offset to control/volume data
     ldy #0
-    lda (TempWord),y          ; Get length again
+    lda (TempWord),y      ; Get length
     clc
     adc #1                ; Add 1 to skip length byte
     adc SFX_RIGHT_TIMER   ; Add current timer position
     tay                   ; Index in Y
     
     ; Get control/volume value
-    lda (TempWord),y          ; Get CV byte
+    lda (TempWord),y      ; Get CV byte
     
     ; Split into volume and control
     tax                   ; Save full value in X
@@ -280,6 +269,23 @@ SFX_UPDATE:
     lsr
     lsr
     sta AUDC1             ; Set control
+    
+    ; NOW increment the timer after using it
+    inc SFX_RIGHT_TIMER
+    
+    ; Get length of the sound effect to check if finished
+    ldy #0
+    lda (TempWord),y      ; Get length byte
+    
+    ; Check if sound effect is finished
+    cmp SFX_RIGHT_TIMER
+    bne .done             ; Continue if not finished
+    
+    ; Sound effect is finished
+    lda #0
+    sta SFX_RIGHT
+    sta SFX_RIGHT_TIMER
+    sta AUDV1             ; Silence channel
     
 .done:
     rts

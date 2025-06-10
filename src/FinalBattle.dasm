@@ -573,6 +573,21 @@ CharacterUpdate subroutine
     lda #BLOCK_TIME
     sta p1Timer,y
 
+    ;Play the correct "block" sound effect
+    tya
+    bne .playQueenBlockSFX
+
+    ;play the loader BeginAttack sound effect
+    ldy #SFX_ID_LOADERBLOCK
+    jsr StartSound
+
+    jmp .doneBlockSFX
+
+.playQueenBlockSFX
+    ;TODO: play the queen block sound effect
+
+.doneBlockSFX
+
     jmp .doneUpdatingPlayerState
 
 .doneCheckingDownPress
