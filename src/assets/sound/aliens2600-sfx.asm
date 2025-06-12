@@ -14,6 +14,8 @@ SFX_ID_LOADERBLOCK = 6
 SFX_ID_LOADERKNOCKBACK = 7
 SFX_ID_SCREECH = 8
 SFX_ID_ALIENDEATH = 9
+SFX_ID_QUEENBEGINATTACK = 10
+SFX_ID_QUEENATTACK = 11
 
 
 ; Sound effect lengths for reference
@@ -26,6 +28,8 @@ SFX_LOADERBLOCK_LENGTH = #21
 SFX_LOADERKNOCKBACK_LENGTH = #35
 SFX_SCREECH_LENGTH = #34
 SFX_ALIENDEATH_LENGTH = #47
+SFX_QUEENBEGINATTACK_LENGTH = #24
+SFX_QUEENATTACK_LENGTH = #20
 
 
 ; Sound Effect Data Structures
@@ -97,6 +101,20 @@ sfxALIENDEATH:
     ; Control/Volume values
     .byte $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7e, $7d, $7c, $7b, $7a, $79, $78, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e9, $ea, $eb, $ec, $ed, $ee, $ef
 
+sfxQUEENBEGINATTACK:
+    .byte #24 ; QueenBeginAttack Length
+    ; Frequency values
+    .byte 8, 8, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0
+    ; Control/Volume values
+    .byte $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3b, $3c, $3d, $3e
+
+sfxQUEENATTACK:
+    .byte #20 ; QueenAttack Length
+    ; Frequency values
+    .byte 0, 0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 9, 9, 9, 9, 9, 9, 9, 9
+    ; Control/Volume values
+    .byte $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8d, $8b, $89, $87, $85, $83, $81
+
 
 ; Sound Effect Table
 SFXTable:
@@ -109,6 +127,8 @@ SFXTable:
     .word sfxLOADERKNOCKBACK ; ID = 7
     .word sfxSCREECH ; ID = 8
     .word sfxALIENDEATH ; ID = 9
+    .word sfxQUEENBEGINATTACK ; ID = 10
+    .word sfxQUEENATTACK ; ID = 11
 
 
 ; Turn off all sound

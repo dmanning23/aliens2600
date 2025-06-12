@@ -1830,6 +1830,282 @@
           "frequency": 20
         }
       ]
+    },
+    {
+      "id": 1749768114889,
+      "name": "QueenBeginAttack",
+      "tones": [
+        {
+          "id": 1749768122409,
+          "control": 3,
+          "volume": 11,
+          "frequency": 8
+        },
+        {
+          "id": 1749768146807,
+          "control": 3,
+          "volume": 11,
+          "frequency": 8
+        },
+        {
+          "id": 1749768147903,
+          "control": 3,
+          "volume": 11,
+          "frequency": 7
+        },
+        {
+          "id": 1749768148386,
+          "control": 3,
+          "volume": 11,
+          "frequency": 7
+        },
+        {
+          "id": 1749768149360,
+          "control": 3,
+          "volume": 11,
+          "frequency": 6
+        },
+        {
+          "id": 1749768149850,
+          "control": 3,
+          "volume": 11,
+          "frequency": 6
+        },
+        {
+          "id": 1749768157935,
+          "control": 3,
+          "volume": 11,
+          "frequency": 5
+        },
+        {
+          "id": 1749768158462,
+          "control": 3,
+          "volume": 11,
+          "frequency": 5
+        },
+        {
+          "id": 1749768159870,
+          "control": 3,
+          "volume": 11,
+          "frequency": 4
+        },
+        {
+          "id": 1749768161221,
+          "control": 3,
+          "volume": 11,
+          "frequency": 4
+        },
+        {
+          "id": 1749768162405,
+          "control": 3,
+          "volume": 11,
+          "frequency": 3
+        },
+        {
+          "id": 1749768162968,
+          "control": 3,
+          "volume": 11,
+          "frequency": 3
+        },
+        {
+          "id": 1749768172056,
+          "control": 3,
+          "volume": 11,
+          "frequency": 2
+        },
+        {
+          "id": 1749768174384,
+          "control": 3,
+          "volume": 11,
+          "frequency": 2
+        },
+        {
+          "id": 1749768175478,
+          "control": 3,
+          "volume": 11,
+          "frequency": 1
+        },
+        {
+          "id": 1749768176752,
+          "control": 3,
+          "volume": 11,
+          "frequency": 1
+        },
+        {
+          "id": 1749768177839,
+          "control": 3,
+          "volume": 11,
+          "frequency": 0
+        },
+        {
+          "id": 1749768182257,
+          "control": 3,
+          "volume": 11,
+          "frequency": 0
+        },
+        {
+          "id": 1749768183113,
+          "control": 3,
+          "volume": 11,
+          "frequency": 0
+        },
+        {
+          "id": 1749768184086,
+          "control": 3,
+          "volume": 11,
+          "frequency": 0
+        },
+        {
+          "id": 1749768184646,
+          "control": 3,
+          "volume": 11,
+          "frequency": 0
+        },
+        {
+          "id": 1749768279306,
+          "control": 3,
+          "volume": 12,
+          "frequency": 0
+        },
+        {
+          "id": 1749768408345,
+          "control": 3,
+          "volume": 13,
+          "frequency": 0
+        },
+        {
+          "id": 1749768409120,
+          "control": 3,
+          "volume": 14,
+          "frequency": 0
+        }
+      ]
+    },
+    {
+      "id": 1749768186978,
+      "name": "QueenAttack",
+      "tones": [
+        {
+          "id": 1749768196171,
+          "control": 8,
+          "volume": 15,
+          "frequency": 0
+        },
+        {
+          "id": 1749768202305,
+          "control": 8,
+          "volume": 15,
+          "frequency": 0
+        },
+        {
+          "id": 1749768203984,
+          "control": 8,
+          "volume": 15,
+          "frequency": 0
+        },
+        {
+          "id": 1749768216432,
+          "control": 8,
+          "volume": 15,
+          "frequency": 1
+        },
+        {
+          "id": 1749768217016,
+          "control": 8,
+          "volume": 15,
+          "frequency": 2
+        },
+        {
+          "id": 1749768220105,
+          "control": 8,
+          "volume": 15,
+          "frequency": 3
+        },
+        {
+          "id": 1749768220722,
+          "control": 8,
+          "volume": 15,
+          "frequency": 4
+        },
+        {
+          "id": 1749768223903,
+          "control": 8,
+          "volume": 15,
+          "frequency": 5
+        },
+        {
+          "id": 1749768224376,
+          "control": 8,
+          "volume": 15,
+          "frequency": 6
+        },
+        {
+          "id": 1749768227551,
+          "control": 8,
+          "volume": 15,
+          "frequency": 7
+        },
+        {
+          "id": 1749768229248,
+          "control": 8,
+          "volume": 15,
+          "frequency": 8
+        },
+        {
+          "id": 1749768233216,
+          "control": 8,
+          "volume": 15,
+          "frequency": 9
+        },
+        {
+          "id": 1749768234591,
+          "control": 8,
+          "volume": 15,
+          "frequency": 9
+        },
+        {
+          "id": 1749768237434,
+          "control": 8,
+          "volume": 13,
+          "frequency": 9
+        },
+        {
+          "id": 1749768240416,
+          "control": 8,
+          "volume": 11,
+          "frequency": 9
+        },
+        {
+          "id": 1749768286143,
+          "control": 8,
+          "volume": 9,
+          "frequency": 9
+        },
+        {
+          "id": 1749768299561,
+          "control": 8,
+          "volume": 7,
+          "frequency": 9
+        },
+        {
+          "id": 1749768301857,
+          "control": 8,
+          "volume": 5,
+          "frequency": 9
+        },
+        {
+          "id": 1749768307041,
+          "control": 8,
+          "volume": 3,
+          "frequency": 9
+        },
+        {
+          "id": 1749768317504,
+          "control": 8,
+          "volume": 1,
+          "frequency": 9
+        }
+      ]
     }
   ]
 }

@@ -539,7 +539,9 @@ CharacterUpdate subroutine
     jmp .doneBeginAttackSFX
 
 .playQueenBeginAttackSFX
-    ;TODO: play the queen BeginAttack sound effect
+    ;play the queen BeginAttack sound effect
+    ldy #SFX_ID_QUEENBEGINATTACK
+    jsr StartSound
 
 .doneBeginAttackSFX
 
@@ -650,7 +652,9 @@ CharacterUpdate subroutine
     jmp .doneAttackSFX
 
 .playQueenAttackSFX
-    ;TODO: play the queen Attack sound effect
+    ;play the queen Attack sound effect
+    ldy #SFX_ID_QUEENATTACK
+    jsr StartSound
 
 .doneAttackSFX
 
