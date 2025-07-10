@@ -586,7 +586,9 @@ CharacterUpdate subroutine
     jmp .doneBlockSFX
 
 .playQueenBlockSFX
-    ;TODO: play the queen block sound effect
+    ;play the queen block sound effect
+    ldy #SFX_ID_QUEENBLOCK
+    jsr StartSound
 
 .doneBlockSFX
 
@@ -1046,7 +1048,9 @@ UpdateGameLogic subroutine
     jmp .doneKillingPlayer
 
 .playLoaderDeathSFX
-    ;TODO: play the loader death sound
+    ;play the loader death sound
+    ldy #SFX_ID_LOADERDEATH
+    jsr StartSound
 
 .doneKillingPlayer
 
@@ -1103,7 +1107,9 @@ UpdateGameLogic subroutine
 
 .playLoaderStunnedSFX
 
-    ;TODO: play the loader stunned sound effect
+    ;play the loader stunned sound effect
+    ldy #SFX_ID_LOADERHIT
+    jsr StartSound
 
 .doneStunningPlayer
 

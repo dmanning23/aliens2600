@@ -16,6 +16,9 @@ SFX_ID_SCREECH = 8
 SFX_ID_ALIENDEATH = 9
 SFX_ID_QUEENBEGINATTACK = 10
 SFX_ID_QUEENATTACK = 11
+SFX_ID_QUEENBLOCK = 12
+SFX_ID_LOADERHIT = 13
+SFX_ID_LOADERDEATH = 14
 
 
 ; Sound effect lengths for reference
@@ -30,6 +33,9 @@ SFX_SCREECH_LENGTH = #34
 SFX_ALIENDEATH_LENGTH = #47
 SFX_QUEENBEGINATTACK_LENGTH = #24
 SFX_QUEENATTACK_LENGTH = #20
+SFX_QUEENBLOCK_LENGTH = #34
+SFX_LOADERHIT_LENGTH = #38
+SFX_LOADERDEATH_LENGTH = #99
 
 
 ; Sound Effect Data Structures
@@ -115,6 +121,27 @@ sfxQUEENATTACK:
     ; Control/Volume values
     .byte $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8f, $8d, $8b, $89, $87, $85, $83, $81
 
+sfxQUEENBLOCK:
+    .byte #34 ; QueenBlock Length
+    ; Frequency values
+    .byte 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 18, 17, 16, 15, 14, 13, 12, 11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+    ; Control/Volume values
+    .byte $81, $82, $83, $84, $85, $86, $87, $88, $89, $8a, $8b, $8c, $8d, $8d, $8d, $8d, $8d, $8d, $8d, $8f, $8e, $8d, $8c, $8b, $8a, $89, $88, $87, $86, $85, $84, $83, $82, $81
+
+sfxLOADERHIT:
+    .byte #38 ; LoaderHit Length
+    ; Frequency values
+    .byte 31, 30, 29, 28, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 20, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9
+    ; Control/Volume values
+    .byte $8f, $8f, $8f, $8f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3f, $3d, $3b, $39, $37, $36, $35, $34, $33, $32, $31
+
+sfxLOADERDEATH:
+    .byte #99 ; LoaderDeath Length
+    ; Frequency values
+    .byte 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 31, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27
+    ; Control/Volume values
+    .byte $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $7f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4f, $4e, $4d, $4c, $4b, $4a, $49, $48, $47, $46, $45, $44, $43, $42, $41, $41, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e8, $e7, $e6, $e5, $e4, $e3, $e2, $e1
+
 
 ; Sound Effect Table
 SFXTable:
@@ -129,6 +156,9 @@ SFXTable:
     .word sfxALIENDEATH ; ID = 9
     .word sfxQUEENBEGINATTACK ; ID = 10
     .word sfxQUEENATTACK ; ID = 11
+    .word sfxQUEENBLOCK ; ID = 12
+    .word sfxLOADERHIT ; ID = 13
+    .word sfxLOADERDEATH ; ID = 14
 
 
 ; Turn off all sound
