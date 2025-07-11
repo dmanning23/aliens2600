@@ -6,6 +6,10 @@ Play it in your browser:
 
 https://javatari.org?ROM=https://github.com/dmanning23/aliens2600/releases/download/v0.3/Aliens2600.bin
 
+Play the SULACO slice of the final game, including just the final battle between the Power Loader and Alien Queen:
+
+https://javatari.org?ROM=https://github.com/dmanning23/aliens2600/releases/download/v0.4/Sulaco.bin
+
 Check the Releases page for the latest version:
 https://github.com/dmanning23/aliens2600/releases
 
